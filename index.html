@@ -521,12 +521,14 @@ const USERS=[
 ];
 const sha=async s=>{const b=new TextEncoder().encode(s);const h=await crypto.subtle.digest('SHA-256',b);return [...new Uint8Array(h)].map(x=>x.toString(16).padStart(2,'0')).join('')};
 let me=JSON.parse(localStorage.getItem('dk_me_v1')||'null');
-/* SELF-HEAL: sesi lama tersimpan tanpa token (versi 351455a/2431766) → bangun ulang.
-   Tanpa ini, HP yg login pakai versi lama akan 401 "no token" selamanya
-   (diagnostik bilang server OK, tapi app tetap "Offline"). */
-if(me&&me.un&&me.role&&!me.token){
-  me.token=me.un+'|'+me.role;
-  try{localStorage.setItem('dk_me_v1',JSON.stringify(me))}catch(e){}
+/* SELF-HEAL: sesi lama (351455a tanpa token, 2431766 token=undefined) → bangun ulang.
+   Cek PERSIS format token; kalau tidak cocok, tulis ulang. */
+if(me&&me.un&&me.role){
+  const _good=me.un+'|'+me.role;
+  if(me.token!==_good){
+    me.token=_good;
+    try{localStorage.setItem('dk_me_v1',JSON.stringify(me))}catch(e){}
+  }
 }
 const isAdmin=()=>me&&me.role==='Ajudan';
 
