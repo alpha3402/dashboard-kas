@@ -643,9 +643,9 @@ async function syncDown(){
     setServerStatus(true);
 
     // 3) push item lokal yg belum sampai server
-    for(const k of newKeg){try{await api('/keg',k)}catch(e){}}
-    for(const t of newTx){try{await api('/tx',t)}catch(e){}}
-    for(const f of newFoto){try{await api('/foto',f)}catch(e){}}
+    for(const k of newKeg){try{await api('/keg',{body:k})}catch(e){}}
+    for(const t of newTx){try{await api('/tx',{body:t})}catch(e){}}
+    for(const f of newFoto){try{await api('/foto',{body:f})}catch(e){}}
 
     // 4) isi foto data utk yg belum punya (backend simpan base64)
     for(const f of photos){if(!f.data){try{const r=await api('/foto/'+f.id,{method:'GET'});if(r&&r.data){f.data=r.data;save()}}catch(e){}}}
@@ -654,9 +654,9 @@ async function syncDown(){
 }
 async function syncUp(kind,obj){
   try{
-    if(kind==='keg')await api('/keg',obj);
-    if(kind==='tx')await api('/tx',obj);
-    if(kind==='foto')await api('/foto',obj);
+    if(kind==='keg')await api('/keg',{body:obj});
+    if(kind==='tx')await api('/tx',{body:obj});
+    if(kind==='foto')await api('/foto',{body:obj});
     setServerStatus(true);
   }catch(e){console.warn('syncUp fail:',e.message);setServerStatus(false)}
 }
