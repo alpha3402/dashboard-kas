@@ -298,7 +298,7 @@ function photosOf(id){return photos.filter(p=>p.kegId===id)}
 function photoStrip(id){
   const ps=photosOf(id);
   let h='<div class="photos">';
-  ps.forEach(p=>{h+=`<div class="photo-wrap"><img src="${p.dataUrl}" alt="dokumentasi" onclick="window.open('${p.dataUrl}','_blank')"><button class="px" data-delphoto="${p.id}">×</button></div>`});
+  ps.forEach(p=>{const src=p.dataUrl||p.data;h+=`<div class="photo-wrap"><img src="${src}" alt="dokumentasi" onclick="window.open('${src}','_blank')"><button class="px" data-delphoto="${p.id}">×</button></div>`});
   h+=`<label class="upl">📷 Upload foto<input type="file" accept="image/*" data-upl="${id}" hidden multiple></label></div>`;
   return h;
 }
@@ -420,7 +420,9 @@ $('#cNom').addEventListener('input',e=>{
 
 $('#formKeg').addEventListener('submit',e=>{
   e.preventDefault();
-  kegs.push({id:uid(),nama:$('#kNama').value.trim(),tanggal:$('#kTgl').value,waktu:$('#kWaktu').value,lokasi:$('#kLok').value.trim(),desc:$('#kDesc').value.trim(),ts:Date.now(),by:me?me.un:'?',role:me?me.role:'?'});
+  const nk={id:uid(),nama:$('#kNama').value.trim(),tanggal:$('#kTgl').value,waktu:$('#kWaktu').value,lokasi:$('#kLok').value.trim(),desc:$('#kDesc').value.trim(),ts:Date.now(),by:me?me.un:'?',role:me?me.role:'?'};
+  kegs.push(nk);save();
+  if(isAdmin())syncUp('keg',nk);
   save();e.target.reset();$('#kTgl').value=todayStr();renderAll();
   $$('nav.tabs button').forEach(x=>x.classList.remove('on'));
   $$('section.tab').forEach(x=>x.classList.remove('on'));
@@ -432,7 +434,9 @@ $('#formKas').addEventListener('submit',e=>{
   e.preventDefault();
   const nom=+$('#cNom').value.replace(/\D/g,'');
   if(!nom||nom<=0){alert('Nominal harus lebih dari 0');return}
-  txs.push({id:uid(),tanggal:$('#cTgl').value,jenis:$('input[name=jenis]:checked').value,nominal:nom,kat:$('#cKat').value,catatan:$('#cCat').value.trim(),ts:Date.now(),by:me?me.un:'?',role:me?me.role:'?'});
+  const nt={id:uid(),tanggal:$('#cTgl').value,jenis:$('input[name=jenis]:checked').value,nominal:nom,kat:$('#cKat').value,catatan:$('#cCat').value.trim(),ts:Date.now(),by:me?me.un:'?',role:me?me.role:'?'};
+  txs.push(nt);save();
+  if(isAdmin())syncUp('tx',nt);
   save();e.target.reset();$('#cTgl').value=todayStr();fillKat();renderAll();
 });
 
@@ -451,16 +455,16 @@ function stampTx(t){
 }
 document.addEventListener('click',e=>{
   const dk=e.target.dataset.delkeg, dt=e.target.dataset.deltx, dp=e.target.dataset.delphoto;
-  if(dk){if(confirm('Hapus kegiatan + semua fotonya?')){kegs=kegs.filter(k=>k.id!==dk);photos=photos.filter(p=>p.kegId!==dk);save();renderAll()}return}
-  if(dt){if(confirm('Hapus transaksi ini?')){txs=txs.filter(t=>t.id!==dt);save();renderAll()}return}
-  if(dp){if(confirm('Hapus foto ini?')){photos=photos.filter(p=>p.id!==dp);save();renderAll()}return}
+  if(dk){if(confirm('Hapus kegiatan + semua fotonya?')){kegs=kegs.filter(k=>k.id!==dk);photos=photos.filter(p=>p.kegId!==dk);save();renderAll();if(isAdmin())api('/keg/'+dk,{method:'DELETE'}).catch(()=>{})}return}
+  if(dt){if(confirm('Hapus transaksi ini?')){txs=txs.filter(t=>t.id!==dt);save();renderAll();if(isAdmin())api('/tx/'+dt,{method:'DELETE'}).catch(()=>{})}return}
+  if(dp){if(confirm('Hapus foto ini?')){photos=photos.filter(p=>p.id!==dp);save();renderAll();if(isAdmin())api('/foto/'+dp,{method:'DELETE'}).catch(()=>{})}return}
 });
 document.addEventListener('change',async e=>{
   const upl=e.target.dataset.upl;
   if(!upl)return;
   const files=[...e.target.files];
   for(const f of files){
-    try{const url=await resizeImage(f,1280,0.65);photos.push({id:uid(),kegId:upl,dataUrl:url,ts:Date.now()})}
+    try{const url=await resizeImage(f,1280,0.65);const np={id:uid(),kegId:upl,dataUrl:url,ts:Date.now()};photos.push(np);save();if(isAdmin())syncUp('foto',{id:np.id,keg_id:np.kegId,data:url})}
     catch(err){alert('Gagal upload: '+f.name)}
   }
   save();renderAll();
@@ -525,7 +529,8 @@ function showLogin(){
     const hash=await sha(document.querySelector('#lpw').value);
     const u=USERS.find(x=>x.un===un&&x.hash===hash);
     if(!u){document.querySelector('#lerr').style.display='block';return}
-    me={un:u.un,role:u.role};localStorage.setItem('dk_me_v1',JSON.stringify(me));
+    me={un:u.un,role:u.role,token:u.token};localStorage.setItem('dk_me_v1',JSON.stringify(me));
+    await syncDown();
     location.reload();
   };
 }
@@ -544,9 +549,64 @@ function renderUserChip(){
 }
 /* ============ END AUTH ============ */
 
+/* ============ API SYNC (backend shared) ============ */
+const API_BASE='https://kas-api-atlas.loca.lt'; // akan di-override di bawah
+const _API_TRY=[
+  'https://kas-api-atlas.loca.lt',
+  'http://127.0.0.1:8000',
+  'http://20.194.60.179:8000'
+];
+let API=localStorage.getItem('dk_api_v1')||'';
+function apiURL(p){return (API||_API_TRY[0])+p}
+async function api(p,opts={}){
+  opts.headers={'Content-Type':'application/json',...(opts.headers||{})};
+  if(me&&me.token)opts.headers['x-auth']=me.token;
+  let body=opts.body;
+  if(body!==undefined&&body!==null)opts.body=JSON.stringify(body);
+  let res=await fetch(apiURL(p),{...opts,method:opts.method||(body!==undefined?'POST':'GET')});
+  if(res.status===401||res.status===403){const j=await res.json().catch(()=>({}));throw new Error(j.detail||'unauthorized')}
+  if(!res.ok){const j=await res.json().catch(()=>({}));throw new Error(j.detail||'HTTP '+res.status)}
+  return res.json().catch(()=>({ok:true}));
+}
+/* ---------- API sync: pull/push ---------- */
+async function syncDown(){
+  try{
+    const d=await api('/data',{method:'GET'});
+    if(d.kegiatan&&d.transaksi){
+      kegs=d.kegiatan.map(k=>({id:k.id,nama:k.nama,tanggal:k.tanggal,waktu:k.waktu||'',lokasi:k.lokasi||'',desc:k.desc||'',ts:k.ts||0,by:k.by,role:k.role}));
+      txs=d.transaksi.map(t=>({id:t.id,tanggal:t.tanggal,jenis:t.jenis,nominal:t.nominal,kat:t.kat,catatan:t.catatan||'',ts:t.ts||0,by:t.by,role:t.role}));
+      // foto: ambil metadata dulu; data asli di-fetch per foto on demand
+      const prevPhotos=JSON.parse(localStorage.getItem('dk_photos_v1')||'[]');
+      const phMap={};prevPhotos.forEach(p=>phMap[p.id]=p);
+      photos=(d.fotos||[]).map(f=>phMap[f.id]||{id:f.id,kegId:f.keg_id,data:null,ts:f.ts});
+      save();renderAll();
+      // isi foto data paralel (backend simpan base64)
+      for(const f of photos){if(!f.data){try{const r=await api('/foto/'+f.id,{method:'GET'});if(r&&r.data){f.data=r.data;save()}}catch(e){}}}
+      renderAll();
+    }
+  }catch(e){console.warn('syncDown fail:',e.message)}
+}
+async function syncUp(kind,obj){
+  try{
+    if(kind==='keg')await api('/keg',obj);
+    if(kind==='tx')await api('/tx',obj);
+    if(kind==='foto')await api('/foto',obj);
+  }catch(e){console.warn('syncUp fail:',e.message);alert('Gagal sinkron ke server: '+e.message+'\nData tetap tersimpan lokal.')}
+}
 /* ---------- init ---------- */
 $('#todayLbl').textContent='Hari ini: '+fmtDateLong(todayStr());
-if(!me){showLogin()}else{renderUserChip();renderAll()}
+async function boot(){
+  // cari API endpoint yg reachable
+  for(const cand of _API_TRY){
+    try{
+      const ctrl=new AbortController();setTimeout(()=>ctrl.abort(),2500);
+      await fetch(cand+'/data',{signal:ctrl.signal,headers:{'x-auth':'arkavilai|Ajudan'}});
+      API=cand;localStorage.setItem('dk_api_v1',cand);break;
+    }catch(e){}
+  }
+  if(!me){showLogin()}else{renderUserChip();await syncDown();renderAll()}
+}
+boot();
 
 /* ---------- PWA: service worker + install prompt ---------- */
 if('serviceWorker' in navigator){
