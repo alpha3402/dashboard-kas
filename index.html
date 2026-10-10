@@ -78,7 +78,7 @@ section.tab.on{display:block}
 .card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px}
 .card.tbl{padding:10px 10px}
 .stat .lbl{font-size:12px;color:var(--mut);text-transform:uppercase;letter-spacing:.4px;font-weight:600}
-.stat .val{font-size:30px;font-weight:750;margin-top:4px}
+.stat .val{font-size:clamp(20px,5.2vw,30px);font-weight:750;margin-top:4px;letter-spacing:-.01em;overflow-wrap:anywhere}
 .stat .val.green{color:var(--grn)} .stat .val.red{color:var(--red)} .stat .val.blue{color:var(--acc)} .stat .val.amber{color:var(--amber)}
 .stat .sub{font-size:12px;color:var(--mut);margin-top:2px}
 h2.sec{font-size:20px;font-weight:700;margin:20px 0 10px;color:var(--txt)}
@@ -181,6 +181,22 @@ dialog.dlg .row .btn{margin:0}
 .toast>.ic{color:var(--ok)}
 .toast.err>.ic{color:var(--danger)}
 .toast.err{border-color:rgba(248,81,73,.42)}
+/* Ponsel: rapatkan skala agar angka rupiah panjang tidak meluber (2 kolom kartu).
+   Ditaruh di akhir agar menang urutan sumber atas aturan dasar di atas. */
+@media(max-width:520px){
+  header h1{font-size:20px}
+  h2.sec{font-size:16px}
+  .stat .lbl,.stat .sub{font-size:11px}
+  .g4{grid-template-columns:repeat(2,1fr)}
+  .card{padding:12px}
+  .card.tbl{padding:8px 6px}
+  table{font-size:12px}
+  th,td{padding:7px 8px}
+  .kv{font-size:13px}
+}
+@media(max-width:340px){
+  .stat .val{font-size:20px}
+}
 @media (prefers-reduced-motion: reduce){
   *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
 }
