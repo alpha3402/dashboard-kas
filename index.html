@@ -690,9 +690,17 @@ boot();
 setInterval(()=>{if(me&&location.pathname!=='')syncDown().catch(()=>{})},60000);
 
 /* ---------- PWA: service worker + install prompt ---------- */
+let _swReloaded=false;
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
-    navigator.serviceWorker.register('./sw.js').catch(err=>console.warn('SW fail:',err));
+    navigator.serviceWorker.register('./sw.js').then(reg=>{
+      // cek update SW tiap kali app dibuka
+      reg.update().catch(()=>{});
+      // kalau SW baru mengambil alih → reload sekali biar HTML fresh
+      navigator.serviceWorker.addEventListener('controllerchange',()=>{
+        if(_swReloaded)return;_swReloaded=true;location.reload();
+      });
+    }).catch(err=>console.warn('SW fail:',err));
   });
 }
 let deferredPrompt=null;
