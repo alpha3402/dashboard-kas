@@ -571,9 +571,8 @@ const _API_TRY=[
   'http://127.0.0.1:8000'
 ];
 let API=localStorage.getItem('dk_api_v1')||'';
-/* reset API cache lama (localtunnel) → pakai Cloudflare yg stabil */
-if(API&&!_API_TRY.includes(API))localStorage.removeItem('dk_api_v1');
-API=localStorage.getItem('dk_api_v1')||'';
+/* buang hanya URL rusak/kosong; URL baru dari discovery tetap dipakai */
+if(API&&!/^https:\/\/[a-z0-9.-]+\.[a-z]{2,}/i.test(API)){localStorage.removeItem('dk_api_v1');API=''}
 function apiURL(p){return (API||_API_TRY[0])+p}
 async function refreshAPIEndpoint(){
   /* URL tunnel bisa berubah tiap restart VM; ambil dari file JSON di repo.
@@ -616,9 +615,9 @@ async function syncDown(){
     Object.values(sFoto).forEach(f=>outFoto[f.id]={id:f.id,kegId:f.keg_id,data:null,ts:f.ts});
 
     // 2) data lokal: menang kalau ts lebih baru; push kalau belum ada di server
-    const curKegs=JSON.parse(localStorage.getItem('dk_kegs_v1')||'[]');
-    const curTxs=JSON.parse(localStorage.getItem('dk_txs_v1')||'[]');
-    const curPhotos=JSON.parse(localStorage.getItem('dk_photos_v1')||'[]');
+    const curKegs=JSON.parse(localStorage.getItem(K_KEG)||'[]');
+    const curTxs=JSON.parse(localStorage.getItem(K_KAS)||'[]');
+    const curPhotos=JSON.parse(localStorage.getItem(K_PHO)||'[]');
     curKegs.forEach(k=>{
       const s=sKeg[k.id];
       if(!s){if(isAdmin())newKeg.push(k)}
