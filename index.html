@@ -581,22 +581,62 @@ async function api(p,opts={}){
   if(!res.ok){const j=await res.json().catch(()=>({}));throw new Error(j.detail||'HTTP '+res.status)}
   return res.json().catch(()=>({ok:true}));
 }
-/* ---------- API sync: pull/push ---------- */
+/* ---------- API sync: pull/push (MERGE, bukan replace) ---------- */
+/* Skema: union by id. Conflict → ts terbesar menang (last-write-wins).
+   Item lokal yg belum ada di server → di-push naik (anti data-loss
+   saat sempat offline). */
 async function syncDown(){
   try{
     const d=await api('/data',{method:'GET'});
-    if(d.kegiatan&&d.transaksi){
-      kegs=d.kegiatan.map(k=>({id:k.id,nama:k.nama,tanggal:k.tanggal,waktu:k.waktu||'',lokasi:k.lokasi||'',desc:k.desc||'',ts:k.ts||0,by:k.by,role:k.role}));
-      txs=d.transaksi.map(t=>({id:t.id,tanggal:t.tanggal,jenis:t.jenis,nominal:t.nominal,kat:t.kat,catatan:t.catatan||'',ts:t.ts||0,by:t.by,role:t.role}));
-      // foto: ambil metadata dulu; data asli di-fetch per foto on demand
-      const prevPhotos=JSON.parse(localStorage.getItem('dk_photos_v1')||'[]');
-      const phMap={};prevPhotos.forEach(p=>phMap[p.id]=p);
-      photos=(d.fotos||[]).map(f=>phMap[f.id]||{id:f.id,kegId:f.keg_id,data:null,ts:f.ts});
-      save();renderAll();
-      // isi foto data paralel (backend simpan base64)
-      for(const f of photos){if(!f.data){try{const r=await api('/foto/'+f.id,{method:'GET'});if(r&&r.data){f.data=r.data;save()}}catch(e){}}}
-      renderAll();
-    }
+    if(!d.kegiatan||!d.transaksi)return;
+    const sKeg={},sTx={},sFoto={};
+    d.kegiatan.forEach(k=>sKeg[k.id]=k);
+    d.transaksi.forEach(t=>sTx[t.id]=t);
+    (d.fotos||[]).forEach(f=>sFoto[f.id]=f);
+
+    const newKeg=[],newTx=[],newFoto=[];
+    const outKeg={},outTx={},outFoto={};
+
+    // 1) server data sebagai basis
+    Object.values(sKeg).forEach(k=>outKeg[k.id]={id:k.id,nama:k.nama,tanggal:k.tanggal,waktu:k.waktu||'',lokasi:k.lokasi||'',desc:k.desc||'',ts:k.ts||0,by:k.by,role:k.role});
+    Object.values(sTx).forEach(t=>outTx[t.id]={id:t.id,tanggal:t.tanggal,jenis:t.jenis,nominal:t.nominal,kat:t.kat,catatan:t.catatan||'',ts:t.ts||0,by:t.by,role:t.role});
+    Object.values(sFoto).forEach(f=>outFoto[f.id]={id:f.id,kegId:f.keg_id,data:null,ts:f.ts});
+
+    // 2) data lokal: menang kalau ts lebih baru; push kalau belum ada di server
+    const curKegs=JSON.parse(localStorage.getItem('dk_kegs_v1')||'[]');
+    const curTxs=JSON.parse(localStorage.getItem('dk_txs_v1')||'[]');
+    const curPhotos=JSON.parse(localStorage.getItem('dk_photos_v1')||'[]');
+    curKegs.forEach(k=>{
+      const s=sKeg[k.id];
+      if(!s){if(isAdmin())newKeg.push(k)}
+      if(!s||(k.ts||0)>=(s.ts||0))outKeg[k.id]=k;
+    });
+    curTxs.forEach(t=>{
+      const s=sTx[t.id];
+      if(!s){if(isAdmin())newTx.push(t)}
+      if(!s||(t.ts||0)>=(s.ts||0))outTx[t.id]=t;
+    });
+    curPhotos.forEach(p=>{
+      const s=sFoto[p.id];
+      // foto lokal punya dataUrl; server pakai field 'data' — samakan
+      const loc={id:p.id,kegId:p.kegId||p.keg_id,data:p.dataUrl||p.data,ts:p.ts||0};
+      if(!s){if(isAdmin()&&loc.data)newFoto.push({id:loc.id,keg_id:loc.kegId,data:loc.data})}
+      if(!s)outFoto[p.id]=loc;
+    });
+
+    kegs=Object.values(outKeg);
+    txs=Object.values(outTx);
+    photos=Object.values(outFoto);
+    save();renderAll();
+
+    // 3) push item lokal yg belum sampai server
+    for(const k of newKeg){try{await api('/keg',k)}catch(e){}}
+    for(const t of newTx){try{await api('/tx',t)}catch(e){}}
+    for(const f of newFoto){try{await api('/foto',f)}catch(e){}}
+
+    // 4) isi foto data utk yg belum punya (backend simpan base64)
+    for(const f of photos){if(!f.data){try{const r=await api('/foto/'+f.id,{method:'GET'});if(r&&r.data){f.data=r.data;save()}}catch(e){}}}
+    renderAll();
   }catch(e){console.warn('syncDown fail:',e.message)}
 }
 async function syncUp(kind,obj){
@@ -604,7 +644,7 @@ async function syncUp(kind,obj){
     if(kind==='keg')await api('/keg',obj);
     if(kind==='tx')await api('/tx',obj);
     if(kind==='foto')await api('/foto',obj);
-  }catch(e){console.warn('syncUp fail:',e.message);alert('Gagal sinkron ke server: '+e.message+'\nData tetap tersimpan lokal.')}
+  }catch(e){console.warn('syncUp fail:',e.message);alert('Gagal sinkron ke server: '+e.message+'\nData tetap tersimpan lokal, akan dikirim otomatis nanti.')}
 }
 /* ---------- init ---------- */
 $('#todayLbl').textContent='Hari ini: '+fmtDateLong(todayStr());
