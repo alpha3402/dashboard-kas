@@ -521,6 +521,13 @@ const USERS=[
 ];
 const sha=async s=>{const b=new TextEncoder().encode(s);const h=await crypto.subtle.digest('SHA-256',b);return [...new Uint8Array(h)].map(x=>x.toString(16).padStart(2,'0')).join('')};
 let me=JSON.parse(localStorage.getItem('dk_me_v1')||'null');
+/* SELF-HEAL: sesi lama tersimpan tanpa token (versi 351455a/2431766) → bangun ulang.
+   Tanpa ini, HP yg login pakai versi lama akan 401 "no token" selamanya
+   (diagnostik bilang server OK, tapi app tetap "Offline"). */
+if(me&&me.un&&me.role&&!me.token){
+  me.token=me.un+'|'+me.role;
+  try{localStorage.setItem('dk_me_v1',JSON.stringify(me))}catch(e){}
+}
 const isAdmin=()=>me&&me.role==='Ajudan';
 
 function showLogin(){
@@ -566,10 +573,9 @@ function renderUserChip(){
 /* ============ API SYNC (backend shared) ============ */
 /* URL PERMANEN via Cloudflare Named Tunnel (atlas-kas) — tidak berubah lagi. */
 const API_BASE='https://kas.atlastechcompany.web.id';
-const _API_TRY=[
-  'https://kas.atlastechcompany.web.id',
-  'http://127.0.0.1:8000'
-];
+const _API_TRY=[API_BASE];
+/* cuma tambahkan localhost kalau memang dibuka dari localhost (dev) */
+if(location.hostname==='localhost'||location.hostname==='127.0.0.1')_API_TRY.push('http://127.0.0.1:8000');
 let API=localStorage.getItem('dk_api_v1')||'';
 /* buang URL cache lama; hanya URL permanen yg sah */
 if(API&&API!==API_BASE){localStorage.removeItem('dk_api_v1');API=''}
@@ -582,7 +588,8 @@ async function refreshAPIEndpoint(){
 }
 async function api(p,opts={}){
   opts.headers={'Content-Type':'application/json',...(opts.headers||{})};
-  if(me&&me.token)opts.headers['x-auth']=me.token;
+  const _tok=(me&&(me.token||(me.un&&me.role?me.un+'|'+me.role:'')))||'';
+  if(_tok)opts.headers['x-auth']=_tok;
   let body=opts.body;
   if(body!==undefined&&body!==null)opts.body=JSON.stringify(body);
   let res=await fetch(apiURL(p),{...opts,method:opts.method||(body!==undefined?'POST':'GET')});
@@ -703,7 +710,7 @@ async function boot(){
       if(r.ok){API=cand;localStorage.setItem('dk_api_v1',cand);break}
     }catch(e){}
   }
-  if(!API)setServerStatus(false);
+  if(!API)setServerStatus(false);else setServerStatus(true);
   if(!me){showLogin()}else{renderUserChip();try{await syncDown()}catch(e){console.warn('syncDown skipped:',e.message)}renderAll()}
 }
 boot();
