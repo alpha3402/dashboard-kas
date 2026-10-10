@@ -699,6 +699,20 @@ async function serverDiagnostic(){
 }
 /* ---------- init ---------- */
 $('#todayLbl').textContent='Hari ini: '+fmtDateLong(todayStr());
+/* telemetri ringan: HP lapor kondisinya ke server (biar bisa didiagnosa jarak jauh) */
+async function sendTele(phase){
+  try{
+    let sw=0,cN=0,script='';
+    try{ if('serviceWorker' in navigator){const rs=await navigator.serviceWorker.getRegistrations();sw=rs.length;script=(rs[0]&&rs[0].active&&rs[0].active.scriptURL)||'';} }catch(e){}
+    try{ if(window.caches)cN=(await caches.keys()).length; }catch(e){}
+    const mtok=(me&&me.token)?(me.token===(me.un+'|'+me.role)?'ok':'wrong'):'missing';
+    await fetch(API_BASE+'/report',{method:'POST',headers:{'Content-Type':'application/json'},cache:'no-store',body:JSON.stringify({
+      ua:navigator.userAgent,src:'index',phase:phase,href:location.href,online:navigator.onLine,
+      sw:sw,sw_script:script,caches:cN,has_me:!!me,token:mtok,api:(API||''),
+      api_ls:(localStorage.getItem('dk_api_v1')||''),standalone:window.matchMedia('(display-mode:standalone)').matches,ts:Date.now()
+    })});
+  }catch(e){}
+}
 async function boot(){
   // ambil URL otoritatif dari GitHub dulu (URL tunnel bisa berubah)
   await refreshAPIEndpoint();
@@ -713,6 +727,7 @@ async function boot(){
     }catch(e){}
   }
   if(!API)setServerStatus(false);else setServerStatus(true);
+  try{await sendTele('boot')}catch(e){}
   if(!me){showLogin()}else{renderUserChip();try{await syncDown()}catch(e){console.warn('syncDown skipped:',e.message)}renderAll()}
 }
 boot();
