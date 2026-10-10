@@ -664,7 +664,31 @@ async function syncUp(kind,obj){
 function setServerStatus(ok){
   const el=$('#srvStatus');if(!el)return;
   if(ok){el.textContent='● Server online';el.style.color='#3fb950';el.title='Data tersimpan di server, shared antar device'}
-  else{el.textContent='◌ Offline — data tersimpan lokal';el.style.color='#d29922';el.title='Server lagi down. Input aman di browser ini, otomatis dikirim saat server hidup.'}
+  else{el.textContent='◌ Offline — data tersimpan lokal';el.style.color='#d29922';el.title='Tap untuk lihat detail diagnostik'}
+  el.style.cursor='pointer';
+  el.onclick=serverDiagnostic;
+}
+/* diagnosa: cek satu-satu kandidat endpoint + tampilkan hasil apa adanya */
+async function serverDiagnostic(){
+  const lines=['🔍 Diagnostik koneksi server',''];
+  lines.push('URL API aktif: '+(API||'(kosong)'));
+  lines.push('Kandidat: '+_API_TRY.length+' endpoint');
+  lines.push('');
+  for(const cand of _API_TRY){
+    let r='';
+    const t0=Date.now();
+    try{
+      const ctrl=new AbortController();setTimeout(()=>ctrl.abort(),9000);
+      const res=await fetch(cand+'/data',{signal:ctrl.signal,headers:{'x-auth':'arkavilai|Ajudan'}});
+      r=res.ok?('✅ OK ('+res.status+', '+(Date.now()-t0)+'ms)'):('⚠️ HTTP '+res.status);
+    }catch(e){r='❌ '+e.name+': '+e.message}
+    lines.push(cand.replace('https://','')+' → '+r);
+  }
+  lines.push('');
+  lines.push('Kalau semua ❌ tapi internet normal → jaringan HP memblokir trycloudflare. Coba pakai data seluler / WiFi lain.');
+  lines.push('');
+  lines.push('Info: '+(navigator.onLine?'online':'offline')+' | SW: '+(('serviceWorker' in navigator)?'ada':'tidak ada'));
+  alert(lines.join('\n'));
 }
 /* ---------- init ---------- */
 $('#todayLbl').textContent='Hari ini: '+fmtDateLong(todayStr());
@@ -688,19 +712,14 @@ boot();
 /* auto-sync tiap 60s biar data tetap fresh */
 setInterval(()=>{if(me&&location.pathname!=='')syncDown().catch(()=>{})},60000);
 
-/* ---------- PWA: service worker + install prompt ---------- */
-let _swReloaded=false;
+/* ---------- PWA: matikan service worker lama (penyebab cache basi) ---------- */
 if('serviceWorker' in navigator){
-  window.addEventListener('load',()=>{
-    navigator.serviceWorker.register('./sw.js').then(reg=>{
-      // cek update SW tiap kali app dibuka
-      reg.update().catch(()=>{});
-      // kalau SW baru mengambil alih → reload sekali biar HTML fresh
-      navigator.serviceWorker.addEventListener('controllerchange',()=>{
-        if(_swReloaded)return;_swReloaded=true;location.reload();
-      });
-    }).catch(err=>console.warn('SW fail:',err));
-  });
+  navigator.serviceWorker.getRegistrations().then(rs=>{
+    rs.forEach(r=>r.unregister().catch(()=>{}));
+  }).catch(()=>{});
+  if(window.caches&&caches.keys){
+    caches.keys().then(ks=>ks.forEach(k=>caches.delete(k))).catch(()=>{});
+  }
 }
 let deferredPrompt=null;
 window.addEventListener('beforeinstallprompt',e=>{
