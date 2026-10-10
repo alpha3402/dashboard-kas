@@ -398,7 +398,18 @@ function renderStore(){
   $('#footStore').textContent=`${kb} KB`;
 }
 
-function renderAll(){renderDashboard();renderKegiatan();renderKas();renderStore()}
+function renderAll(){
+  // simpan input user sebelum re-render (form ikut ter-replace)
+  const snap={};
+  ['#kTgl','#kNama','#kWaktu','#kLok','#kDesc','#cTgl','#cNom','#cKat','#cCat'].forEach(s=>{
+    const el=$(s); if(el)snap[s]={v:el.value,sel:el.selectedIndex};
+  });
+  const kesc=$('#formKeg .esc')?.checked, cesc=$('#formKas .esc')?.checked;
+  renderDashboard();renderKegiatan();renderKas();renderStore();
+  Object.entries(snap).forEach(([s,o])=>{const el=$(s); if(el){el.value=o.v; if(o.sel!=null&&el.tagName==='SELECT')el.selectedIndex=o.sel}});
+  if(kesc!=null&&$('#formKeg .esc'))$('#formKeg .esc').checked=kesc;
+  if(cesc!=null&&$('#formKas .esc'))$('#formKas .esc').checked=cesc;
+}
 
 /* ---------- forms ---------- */
 $('#kTgl').value=todayStr();
