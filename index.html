@@ -236,6 +236,7 @@ footer{text-align:center;color:var(--mut);font-size:11px;margin-top:26px;padding
     <h2 class="sec">📊 Ringkasan Penyimpanan</h2>
     <div id="storeInfo" style="color:var(--mut);font-size:13px"></div>
     <button class="btn ghost sm" id="btnReset" style="margin-top:12px;width:auto">🗑 Reset Semua Data</button>
+    <button class="btn sm" id="btnSync" style="margin-top:8px;width:auto">🔄 Sinkron Ulang dari Server</button>
   </div>
 </section>
 
@@ -492,6 +493,7 @@ $('#importFile').addEventListener('change',e=>{
   };
   r.readAsText(f);e.target.value='';
 });
+$('#btnSync').addEventListener('click',async()=>{await syncDown();alert('Sinkron selesai')});
 $('#btnReset').addEventListener('click',()=>{
   if(!confirm('Hapus SEMUA data? Tidak bisa dibatalkan.'))return;
   if(!confirm('Yakin? Pastikan sudah backup.'))return;
@@ -529,7 +531,7 @@ function showLogin(){
     const hash=await sha(document.querySelector('#lpw').value);
     const u=USERS.find(x=>x.un===un&&x.hash===hash);
     if(!u){document.querySelector('#lerr').style.display='block';return}
-    me={un:u.un,role:u.role,token:u.token};localStorage.setItem('dk_me_v1',JSON.stringify(me));
+    me={un:u.un,role:u.role,token:u.un+'|'+u.role};localStorage.setItem('dk_me_v1',JSON.stringify(me));
     await syncDown();
     location.reload();
   };
@@ -604,9 +606,11 @@ async function boot(){
       API=cand;localStorage.setItem('dk_api_v1',cand);break;
     }catch(e){}
   }
-  if(!me){showLogin()}else{renderUserChip();await syncDown();renderAll()}
+  if(!me){showLogin()}else{renderUserChip();try{await syncDown()}catch(e){console.warn('syncDown skipped:',e.message)}renderAll()}
 }
 boot();
+/* auto-sync tiap 60s biar data tetap fresh */
+setInterval(()=>{if(me&&location.pathname!=='')syncDown().catch(()=>{})},60000);
 
 /* ---------- PWA: service worker + install prompt ---------- */
 if('serviceWorker' in navigator){
