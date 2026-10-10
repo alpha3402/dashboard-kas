@@ -15,10 +15,21 @@
 <title>Dashboard Kas & Kegiatan</title>
 <style>
 :root{
-  --bg:#0d1117; --card:#161b26; --card2:#1b2230; --border:#242c3d;
-  --txt:#e8ebf2; --mut:#8b93a7; --acc:#4f8cff; --grn:#34c98e;
-  --red:#ff6b6b; --amber:#f5b942; --purple:#a06bff;
+  --bg:#0d1117; --bg2:#10161f; --card:#161b26; --card2:#1b2230;
+  --border:#242c3d; --border-strong:#303a4f;
+  --txt:#e8ebf2; --mut:#8b93a7;
+  --acc:#4f8cff;        /* teks/aksen — kontras 5.36:1 di kartu (AA) */
+  --acc-strong:#2f66d6; /* latar tombol — teks putih 5.26:1 (AA) */
+  --acc-soft:rgba(79,140,255,.14);
+  --grn:#34c98e; --red:#ff6b6b; --amber:#f5b942; --purple:#a06bff;
+  --ok:#3fb950; --warn:#d29922; --danger:#f85149;
+  --ring:rgba(79,140,255,.55);
+  --dur:.18s; --ease:cubic-bezier(.32,.72,0,1);
 }
+/* Ikon: satu sistem — SVG ber-stroke konsisten (craft-floor: bukan emoji/glyph) */
+.ic{width:1.15em;height:1.15em;flex:none;stroke:currentColor;fill:none;
+    stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;vertical-align:-.18em}
+.ic.sm{width:1em;height:1em}
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:var(--bg);color:var(--txt);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:14px;line-height:1.5}
 .wrap{max-width:1100px;margin:0 auto;padding:0 14px calc(60px + env(safe-area-inset-bottom,0px));padding-top:max(14px,env(safe-area-inset-top,0px))}
@@ -26,8 +37,8 @@ header{padding:18px 0 10px;padding-top:max(18px,env(safe-area-inset-top,0px))}
 header h1{font-size:19px;font-weight:700}
 header .sub{color:var(--mut);font-size:12px;margin-top:2px}
 nav.tabs{display:flex;gap:6px;position:sticky;top:max(0px,env(safe-area-inset-top,0px));background:var(--bg);padding:10px 0;z-index:10;border-bottom:1px solid var(--border)}
-nav.tabs button{flex:1;background:var(--card);border:1px solid var(--border);color:var(--mut);padding:max(9px,calc(9px + env(safe-area-inset-top,0px)*0.3)) 6px;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;min-height:44px}
-nav.tabs button.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+nav.tabs button{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:6px;background:var(--card);border:1px solid var(--border);color:var(--mut);padding:max(9px,calc(9px + env(safe-area-inset-top,0px)*0.3)) 6px;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;min-height:44px}
+nav.tabs button.on{background:var(--acc-strong);color:#fff;border-color:var(--acc-strong)}
 nav.tabs button:hover:not(.on){color:var(--txt)}
 section.tab{display:none;padding-top:16px}
 section.tab.on{display:block}
@@ -81,7 +92,7 @@ textarea{resize:vertical;min-height:64px}
 .radio input:checked + span{color:#fff}
 .radio label.on-green{border-color:var(--grn);background:rgba(52,201,142,.12)}
 .radio label.on-red{border-color:var(--red);background:rgba(255,107,107,.12)}
-button.btn{background:var(--acc);color:#fff;border:none;border-radius:8px;padding:10px 16px;font-size:14px;font-weight:700;cursor:pointer;width:100%}
+button.btn{background:var(--acc-strong);color:#fff;border:none;border-radius:8px;padding:10px 16px;font-size:14px;font-weight:700;cursor:pointer;width:100%}
 button.btn:hover{filter:brightness(1.12)}
 button.btn.ghost{background:var(--card2);border:1px solid var(--border);color:var(--txt)}
 button.btn.sm{width:auto;padding:5px 10px;font-size:12px;border-radius:6px}
@@ -127,47 +138,118 @@ footer{text-align:center;color:var(--mut);font-size:11px;margin-top:26px;padding
 .upl:hover{border-color:var(--acc);color:var(--txt)}
 .kv{display:flex;justify-content:space-between;font-size:13px;padding:5px 0;border-bottom:1px solid var(--border)}
 .kv:last-child{border:none}
+/* ---------- craft-floor: permukaan browser, states, gerak ---------- */
+html{color-scheme:dark}
+body{caret-color:var(--acc);-webkit-font-smoothing:antialiased}
+*{-webkit-tap-highlight-color:transparent}
+::selection{background:rgba(79,140,255,.30);color:#fff}
+*{scrollbar-width:thin;scrollbar-color:var(--border-strong) transparent}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-thumb{background:var(--border-strong);border-radius:8px;border:2px solid var(--bg)}
+::-webkit-scrollbar-thumb:hover{background:#3b465e}
+a{color:var(--acc);text-underline-offset:2px}
+.num,.amount,.stat .val,td,th{font-variant-numeric:tabular-nums}
+h1,h2.sec,.item .nama,.grp-title span{text-wrap:balance}
+.item .desc{max-width:72ch}
+:focus-visible{outline:2px solid var(--ring);outline-offset:2px;border-radius:6px}
+button,.btn,.upl,.del,nav.tabs button{transition:background-color var(--dur) var(--ease),border-color var(--dur) var(--ease),color var(--dur) var(--ease),filter var(--dur) var(--ease),transform var(--dur) var(--ease),opacity var(--dur) var(--ease)}
+button:active:not(:disabled),.btn:active:not(:disabled){transform:translateY(1px)}
+button:disabled,.btn:disabled,.btn[aria-disabled=true]{opacity:.5;cursor:not-allowed;filter:none}
+.btn[data-loading=true]{position:relative;color:transparent}
+.btn[data-loading=true]::after{content:"";position:absolute;inset:0;margin:auto;width:16px;height:16px;
+  border:2px solid rgba(255,255,255,.45);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+input[aria-invalid=true],textarea[aria-invalid=true],select[aria-invalid=true]{border-color:var(--danger)}
+.fielderr{color:var(--danger);font-size:11.5px;margin-top:4px;display:none}
+.fielderr.on{display:block}
+dialog.dlg{border:1px solid var(--border);background:var(--card);color:var(--txt);border-radius:12px;
+  padding:18px;max-width:340px;width:calc(100% - 32px);box-shadow:0 14px 44px rgba(0,0,0,.55)}
+dialog.dlg::backdrop{background:rgba(3,6,12,.66)}
+dialog.dlg h3{margin:0 0 6px;font-size:15px}
+dialog.dlg p{margin:0 0 14px;color:var(--mut);font-size:13px;line-height:1.55}
+dialog.dlg .row{display:flex;gap:8px}
+dialog.dlg .row .btn{margin:0}
+.toast{position:fixed;left:14px;right:14px;bottom:calc(14px + env(safe-area-inset-bottom,0px));z-index:120;
+  background:var(--card2);border:1px solid var(--border);border-radius:11px;padding:11px 13px;font-size:13px;
+  display:flex;gap:9px;align-items:center;box-shadow:0 12px 32px rgba(0,0,0,.45);
+  transform:translateY(130%);opacity:0;transition:transform .22s var(--ease),opacity .22s var(--ease);pointer-events:none}
+.toast.on{transform:none;opacity:1}
+.toast>.ic{color:var(--ok)}
+.toast.err>.ic{color:var(--danger)}
+.toast.err{border-color:rgba(248,81,73,.42)}
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+}
 </style>
 </head>
 <body>
+<!-- Sistem ikon: SVG ber-stroke seragam (bukan emoji) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
+<symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7.5" height="7.5" rx="1.6"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="1.6"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="1.6"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.6"/></symbol>
+<symbol id="i-cal" viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="16" rx="2.2"/><path d="M3 9.6h18M8 2.6v3.6M16 2.6v3.6"/></symbol>
+<symbol id="i-cash" viewBox="0 0 24 24"><rect x="2.5" y="6" width="19" height="12" rx="2.2"/><circle cx="12" cy="12" r="2.6"/><path d="M6 9.6v4.8M18 9.6v4.8"/></symbol>
+<symbol id="i-db" viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="7.5" ry="2.9"/><path d="M4.5 6v12c0 1.6 3.36 2.9 7.5 2.9s7.5-1.3 7.5-2.9V6"/><path d="M4.5 12c0 1.6 3.36 2.9 7.5 2.9s7.5-1.3 7.5-2.9"/></symbol>
+<symbol id="i-chart" viewBox="0 0 24 24"><path d="M3 20.5h18"/><path d="M6.5 20.5v-6M12 20.5V4.5M17.5 20.5v-9.5"/></symbol>
+<symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21.5s6.6-5.7 6.6-10.7A6.6 6.6 0 0 0 5.4 10.8C5.4 15.8 12 21.5 12 21.5Z"/><circle cx="12" cy="10.6" r="2.4"/></symbol>
+<symbol id="i-next" viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="16" rx="2.2"/><path d="M3 9.6h18M8 2.6v3.6M16 2.6v3.6"/><path d="M9.5 14l2.6 2.6L14.7 14"/></symbol>
+<symbol id="i-receipt" viewBox="0 0 24 24"><path d="M5.5 3.2 7.5 4.6 9.5 3.2 11.5 4.6 13.5 3.2 15.5 4.6 17.5 3.2 18.5 4V20.8l-1.5-1.1-2 1.3-2-1.3-2 1.3-2-1.3-1.5 1.1Z"/><path d="M9 9h6M9 12.6h6"/></symbol>
+<symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5.2v13.6M5.2 12h13.6"/></symbol>
+<symbol id="i-book" viewBox="0 0 24 24"><path d="M4 5.4A2.4 2.4 0 0 1 6.4 3H19v14.4H6.4A2.4 2.4 0 0 0 4 19.8Z"/><path d="M4 19.8A2.4 2.4 0 0 1 6.4 17.4H19V21H6.4A2.4 2.4 0 0 1 4 18.6Z"/></symbol>
+<symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3.2v11.6M7.4 10.4 12 15l4.6-4.6M4 19.6h16"/></symbol>
+<symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 20.8V9.2M7.4 13.8 12 9.2l4.6 4.6M4 4.4h16"/></symbol>
+<symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M9.2 7V5.2A1.8 1.8 0 0 1 11 3.4h2a1.8 1.8 0 0 1 1.8 1.8V7"/><path d="M6.2 7l.9 12.3A1.8 1.8 0 0 0 8.9 21h6.2a1.8 1.8 0 0 0 1.8-1.7L17.8 7"/></symbol>
+<symbol id="i-sync" viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.35-5.66"/><path d="M20.4 4.4v4.2h-4.2"/></symbol>
+<symbol id="i-camera" viewBox="0 0 24 24"><path d="M4 8h2.8l1.5-2.2h7.4L17.2 8H20a1 1 0 0 1 1 1v9.4a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1Z"/><circle cx="12" cy="13.2" r="3.2"/></symbol>
+<symbol id="i-x" viewBox="0 0 24 24"><path d="M6.2 6.2 17.8 17.8M17.8 6.2 6.2 17.8"/></symbol>
+<symbol id="i-check" viewBox="0 0 24 24"><path d="M4.4 12.6 9.3 17.5 19.6 6.6"/></symbol>
+<symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 3.4 2.6 20.2h18.8L12 3.4Z"/><path d="M12 9.6v4.2M12 16.9v.3"/></symbol>
+<symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.8"/><path d="M12 11v5.6M12 7.5v.3"/></symbol>
+<symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.6"/><path d="M15.9 15.9 21 21"/></symbol>
+<symbol id="i-phone" viewBox="0 0 24 24"><rect x="6.8" y="2.6" width="10.4" height="18.8" rx="2.6"/><path d="M10.8 18.4h2.4"/></symbol>
+<symbol id="i-dot" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.6" fill="currentColor" stroke="none"/></symbol>
+<symbol id="i-ring" viewBox="0 0 24 24"><circle cx="12" cy="12" r="6.6"/></symbol>
+<symbol id="i-in" viewBox="0 0 24 24"><path d="M12 4.5v15M6 13.5 12 19.5 18 13.5"/></symbol>
+<symbol id="i-out" viewBox="0 0 24 24"><path d="M12 19.5v-15M6 10.5 12 4.5 18 10.5"/></symbol>
+<symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3 5 5.6v5.6c0 4.4 2.9 8.2 7 9.8 4.1-1.6 7-5.4 7-9.8V5.6Z"/></symbol>
+</defs></svg>
 <div class="wrap">
 <header>
-  <h1>💰 Dashboard Kas & Kegiatan</h1>
+  <h1><svg class="ic" aria-hidden="true"><use href="#i-cash"/></svg> Dashboard Kas &amp; Kegiatan</h1>
   <div class="sub" id="todayLbl"></div>
-  <div id="srvStatus" style="font-size:12px;font-weight:600;margin-top:2px">◌ Cek server…</div>
+  <div id="srvStatus" style="font-size:12px;font-weight:600;margin-top:2px"><svg class="ic sm" aria-hidden="true"><use href="#i-ring"/></svg> Cek server…</div>
 </header>
 
 <nav class="tabs">
-  <button data-tab="dashboard" class="on">📊 Dashboard</button>
-  <button data-tab="kegiatan">📋 Kegiatan</button>
-  <button data-tab="kas">💵 Kas</button>
-  <button data-tab="data">💾 Data</button>
+  <button data-tab="dashboard" class="on"><svg class="ic" aria-hidden="true"><use href="#i-grid"/></svg> Dashboard</button>
+  <button data-tab="kegiatan"><svg class="ic" aria-hidden="true"><use href="#i-cal"/></svg> Kegiatan</button>
+  <button data-tab="kas"><svg class="ic" aria-hidden="true"><use href="#i-cash"/></svg> Kas</button>
+  <button data-tab="data"><svg class="ic" aria-hidden="true"><use href="#i-db"/></svg> Data</button>
 </nav>
 
 <!-- ============ DASHBOARD ============ -->
 <section class="tab on" id="tab-dashboard">
   <div class="grid g4" id="stats"></div>
 
-  <h2 class="sec">📈 6 Bulan Terakhir</h2>
+  <h2 class="sec"><svg class="ic" aria-hidden="true"><use href="#i-chart"/></svg> 6 Bulan Terakhir</h2>
   <div class="card">
     <div class="chart" id="chart"></div>
     <div class="legend"><span><i style="background:var(--grn)"></i>Pemasukan</span><span><i style="background:var(--red)"></i>Pengeluaran</span></div>
   </div>
 
-  <h2 class="sec">📌 Kegiatan Hari Ini <span class="cnt" id="cntToday"></span></h2>
+  <h2 class="sec"><svg class="ic" aria-hidden="true"><use href="#i-pin"/></svg> Kegiatan Hari Ini <span class="cnt" id="cntToday"></span></h2>
   <div id="dashToday"></div>
 
-  <h2 class="sec">🗓️ Akan Datang <span class="cnt" id="cntNext"></span></h2>
+  <h2 class="sec"><svg class="ic" aria-hidden="true"><use href="#i-next"/></svg> Akan Datang <span class="cnt" id="cntNext"></span></h2>
   <div id="dashNext"></div>
 
-  <h2 class="sec">🧾 Transaksi Terakhir</h2>
+  <h2 class="sec"><svg class="ic" aria-hidden="true"><use href="#i-receipt"/></svg> Transaksi Terakhir</h2>
   <div id="dashTx"></div>
 </section>
 
 <!-- ============ KEGIATAN ============ -->
 <section class="tab" id="tab-kegiatan">
   <div class="card">
-    <h2 class="sec" style="margin-top:0">➕ Tambah Kegiatan</h2>
+    <h2 class="sec" style="margin-top:0"><svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg> Tambah Kegiatan</h2>
     <form class="f" id="formKeg">
       <div class="row2">
         <div><label>Nama Kegiatan *</label><input type="text" id="kNama" placeholder="Contoh: Trip Kiluan" required></div>
@@ -182,28 +264,28 @@ footer{text-align:center;color:var(--mut);font-size:11px;margin-top:26px;padding
     </form>
   </div>
 
-  <div class="grp-title"><span>🔵 Hari Ini</span><div class="ln"></div></div>
+  <div class="grp-title"><span><svg class="ic sm" aria-hidden="true" style="color:var(--acc)"><use href="#i-dot"/></svg> Hari Ini</span><div class="ln"></div></div>
   <div id="grpHariIni"></div>
-  <div class="grp-title"><span>🟢 Akan Datang</span><div class="ln"></div></div>
+  <div class="grp-title"><span><svg class="ic sm" aria-hidden="true" style="color:var(--grn)"><use href="#i-dot"/></svg> Akan Datang</span><div class="ln"></div></div>
   <div id="grpAkan"></div>
-  <div class="grp-title"><span>⚪ Sudah Lewat</span><div class="ln"></div></div>
+  <div class="grp-title"><span><svg class="ic sm" aria-hidden="true" style="color:var(--mut)"><use href="#i-dot"/></svg> Sudah Lewat</span><div class="ln"></div></div>
   <div id="grpLewat"></div>
 </section>
 
 <!-- ============ KAS ============ -->
 <section class="tab" id="tab-kas">
   <div class="card">
-    <h2 class="sec" style="margin-top:0">➕ Input Transaksi</h2>
+    <h2 class="sec" style="margin-top:0"><svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg> Input Transaksi</h2>
     <form class="f" id="formKas">
       <div><label>Jenis *</label>
         <div class="radio">
-          <label id="lbMasuk" class="on-green"><input type="radio" name="jenis" value="masuk" checked><span>↓ Pemasukan</span></label>
-          <label id="lbKeluar"><input type="radio" name="jenis" value="keluar"><span>↑ Pengeluaran</span></label>
+          <label id="lbMasuk" class="on-green"><input type="radio" name="jenis" value="masuk" checked><span><svg class="ic" aria-hidden="true"><use href="#i-in"/></svg> Pemasukan</span></label>
+          <label id="lbKeluar"><input type="radio" name="jenis" value="keluar"><span><svg class="ic" aria-hidden="true"><use href="#i-out"/></svg> Pengeluaran</span></label>
         </div>
       </div>
       <div class="row2">
         <div><label>Tanggal *</label><input type="date" id="cTgl" required></div>
-        <div><label>Nominal (Rp) *</label><input type="text" id="cNom" inputmode="numeric" placeholder="50.000" required></div>
+        <div><label>Nominal (Rp) *</label><input type="text" id="cNom" inputmode="numeric" placeholder="50.000" required aria-describedby="cNomErr"><div class="fielderr" id="cNomErr">Nominal harus lebih dari 0.</div></div>
       </div>
       <div><label>Kategori</label><select id="cKat"></select></div>
       <div><label>Catatan</label><input type="text" id="cCat" placeholder="Contoh: Makan siang tim"></div>
@@ -211,7 +293,7 @@ footer{text-align:center;color:var(--mut);font-size:11px;margin-top:26px;padding
     </form>
   </div>
 
-  <h2 class="sec">📒 Riwayat Kas</h2>
+  <h2 class="sec"><svg class="ic" aria-hidden="true"><use href="#i-book"/></svg> Riwayat Kas</h2>
   <div class="card" style="padding:0;overflow-x:auto">
     <table>
       <thead><tr><th>Tanggal</th><th>Jenis</th><th>Kategori</th><th>Catatan</th><th class="num">Nominal</th><th class="num">Saldo</th><th>Oleh</th><th></th></tr></thead>
@@ -223,21 +305,21 @@ footer{text-align:center;color:var(--mut);font-size:11px;margin-top:26px;padding
 <!-- ============ DATA ============ -->
 <section class="tab" id="tab-data">
   <div class="card">
-    <h2 class="sec" style="margin-top:0">💾 Backup & Restore</h2>
+    <h2 class="sec" style="margin-top:0"><svg class="ic" aria-hidden="true"><use href="#i-db"/></svg> Backup &amp; Restore</h2>
     <p style="color:var(--mut);font-size:13px;margin-bottom:12px">
       Data tersimpan di browser (localStorage). Backup berkala agar tidak hilang saat ganti device / clear browser.
     </p>
     <div class="grid g2">
-      <button class="btn" id="btnBackup">⬇ Download Backup (.json)</button>
-      <button class="btn ghost" id="btnImport">⬆ Import dari File</button>
+      <button class="btn" id="btnBackup"><svg class="ic" aria-hidden="true"><use href="#i-download"/></svg> Download Backup (.json)</button>
+      <button class="btn ghost" id="btnImport"><svg class="ic" aria-hidden="true"><use href="#i-upload"/></svg> Import dari File</button>
     </div>
     <input type="file" id="importFile" accept=".json" style="display:none">
   </div>
   <div class="card" style="margin-top:12px">
-    <h2 class="sec">📊 Ringkasan Penyimpanan</h2>
+    <h2 class="sec"><svg class="ic" aria-hidden="true"><use href="#i-db"/></svg> Ringkasan Penyimpanan</h2>
     <div id="storeInfo" style="color:var(--mut);font-size:13px"></div>
-    <button class="btn ghost sm" id="btnReset" style="margin-top:12px;width:auto">🗑 Reset Semua Data</button>
-    <button class="btn sm" id="btnSync" style="margin-top:8px;width:auto">🔄 Sinkron Ulang dari Server</button>
+    <button class="btn ghost sm" id="btnReset" style="margin-top:12px;width:auto"><svg class="ic" aria-hidden="true"><use href="#i-trash"/></svg> Reset Semua Data</button>
+    <button class="btn sm" id="btnSync" style="margin-top:8px;width:auto"><svg class="ic" aria-hidden="true"><use href="#i-sync"/></svg> Sinkron Ulang dari Server</button>
   </div>
 </section>
 
@@ -269,6 +351,29 @@ function fmtDate(s){const d=new Date(s+'T00:00:00');return `${d.getDate()} ${BLN
 function fmtDateLong(s){const d=new Date(s+'T00:00:00');return `${BLN[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`}
 function daysBetween(a,b){return Math.round((new Date(b+'T00:00:00')-new Date(a+'T00:00:00'))/864e5)}
 const esc=s=>String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+/* ikon (satu sistem SVG) */
+const ic=(n,cls='')=>`<svg class="ic ${cls}" aria-hidden="true"><use href="#i-${n}"/></svg>`;
+/* dialog konfirmasi bertema — menggantikan confirm() bawaan browser */
+function askConfirm({title='Konfirmasi',body='',ok='Lanjutkan',cancel='Batal',danger=false}={}){
+  return new Promise(res=>{
+    const d=document.createElement('dialog');d.className='dlg';
+    d.innerHTML=`<h3>${esc(title)}</h3>${body?`<p>${body}</p>`:''}
+      <div class="row"><button class="btn ghost" value="c">${esc(cancel)}</button>
+      <button class="btn" value="o"${danger?' style="background:var(--danger)"':''}>${esc(ok)}</button></div>`;
+    d.addEventListener('close',()=>{res(d.returnValue==='o');d.remove()});
+    document.body.appendChild(d);d.showModal();
+  });
+}
+/* toast ringan (pengganti alert utk feedback non-blokir) */
+let _toastT;
+function toast(msg,kind='ok'){
+  let t=document.querySelector('.toast');
+  if(!t){t=document.createElement('div');t.className='toast';document.body.appendChild(t)}
+  t.className='toast'+(kind==='err'?' err':'');
+  t.innerHTML=ic(kind==='err'?'alert':'check')+`<span>${esc(msg)}</span>`;
+  requestAnimationFrame(()=>t.classList.add('on'));
+  clearTimeout(_toastT);_toastT=setTimeout(()=>t.classList.remove('on'),2600);
+}
 
 const KAT_MASUK=['Iuran','Donasi','Sponsor','Penjualan','Lainnya'];
 const KAT_KELUAR=['Makan','Transport','Kegiatan','Operasional','Pembelian','Lainnya'];
@@ -300,8 +405,8 @@ function photosOf(id){return photos.filter(p=>p.kegId===id)}
 function photoStrip(id){
   const ps=photosOf(id);
   let h='<div class="photos">';
-  ps.forEach(p=>{const src=p.dataUrl||p.data;h+=`<div class="photo-wrap"><img src="${src}" alt="dokumentasi" onclick="window.open('${src}','_blank')"><button class="px" data-delphoto="${p.id}">×</button></div>`});
-  h+=`<label class="upl">📷 Upload foto<input type="file" accept="image/*" data-upl="${id}" hidden multiple></label></div>`;
+  ps.forEach(p=>{const src=p.dataUrl||p.data;h+=`<div class="photo-wrap"><img src="${src}" alt="dokumentasi" onclick="window.open('${src}','_blank')"><button class="px" data-delphoto="${p.id}" aria-label="Hapus foto">${ic('x','sm')}</button></div>`});
+  h+=`<label class="upl">${ic('camera')} Upload foto<input type="file" accept="image/*" data-upl="${id}" hidden multiple></label></div>`;
   return h;
 }
 
@@ -355,7 +460,7 @@ function kegCards(list){
       <div class="meta">${fmtDateLong(k.tanggal)}${k.waktu?' · '+k.waktu:''}${k.lokasi?' · '+esc(k.lokasi):''}</div>
       ${k.desc?`<div class="desc">${esc(k.desc)}</div>`:''}
       ${photoStrip(k.id)}</div>
-      <button class="del" data-delkeg="${k.id}" title="Hapus">✕</button>
+      <button class="del" data-delkeg="${k.id}" title="Hapus" aria-label="Hapus kegiatan">${ic('x')}</button>
     </div></div>`;
   }).join('');
 }
@@ -387,7 +492,7 @@ function renderKas(){
       <td class="num"><span class="amount ${r.x.jenis==='masuk'?'in':'out'}">${r.x.jenis==='masuk'?'+':'−'} ${fmtMoney(r.x.nominal)}</span></td>
       <td class="num" style="font-weight:600">${fmtMoney(r.run)}</td>
       <td style="white-space:nowrap;font-size:11.5px;color:var(--mut)">${r.x.by?esc(r.x.by)+(r.x.role?'<br><span style="opacity:.7">'+esc(r.x.role)+'</span>':''):'—'}</td>
-      <td><button class="del" data-deltx="${r.x.id}" title="Hapus">✕</button></td>
+      <td><button class="del" data-deltx="${r.x.id}" title="Hapus" aria-label="Hapus transaksi">${ic('x')}</button></td>
     </tr>`).join('');
 }
 
@@ -431,11 +536,14 @@ $('#cNom').addEventListener('input',e=>{
   e.target.value=d?fmtNum(+d):'';
 });
 
-$('#formKeg').addEventListener('submit',e=>{
+$('#formKeg').addEventListener('submit',async e=>{
   e.preventDefault();
   const nk={id:uid(),nama:$('#kNama').value.trim(),tanggal:$('#kTgl').value,waktu:$('#kWaktu').value,lokasi:$('#kLok').value.trim(),desc:$('#kDesc').value.trim(),ts:Date.now(),by:me?me.un:'?',role:me?me.role:'?'};
   kegs.push(nk);save();
-  if(isAdmin())syncUp('keg',nk);
+  const btn=$('#kSubmit');btn.dataset.loading='true';btn.disabled=true;
+  if(isAdmin())await syncUp('keg',nk);
+  btn.dataset.loading='false';btn.disabled=false;
+  toast('Kegiatan tersimpan');
   save();e.target.reset();$('#kTgl').value=todayStr();renderAll();
   $$('nav.tabs button').forEach(x=>x.classList.remove('on'));
   $$('section.tab').forEach(x=>x.classList.remove('on'));
@@ -443,13 +551,22 @@ $('#formKeg').addEventListener('submit',e=>{
   renderAll();
 });
 
-$('#formKas').addEventListener('submit',e=>{
+$('#formKas').addEventListener('submit',async e=>{
   e.preventDefault();
   const nom=+$('#cNom').value.replace(/\D/g,'');
-  if(!nom||nom<=0){alert('Nominal harus lebih dari 0');return}
+  const nomEl=$('#cNom'), errEl=document.querySelector('#cNomErr');
+  if(!nom||nom<=0){
+    nomEl.setAttribute('aria-invalid','true');
+    if(errEl)errEl.classList.add('on');
+    nomEl.focus();toast('Nominal harus lebih dari 0','err');return;
+  }
+  nomEl.removeAttribute('aria-invalid');if(errEl)errEl.classList.remove('on');
   const nt={id:uid(),tanggal:$('#cTgl').value,jenis:$('input[name=jenis]:checked').value,nominal:nom,kat:$('#cKat').value,catatan:$('#cCat').value.trim(),ts:Date.now(),by:me?me.un:'?',role:me?me.role:'?'};
   txs.push(nt);save();
-  if(isAdmin())syncUp('tx',nt);
+  const btn=$('#cSubmit');btn.dataset.loading='true';btn.disabled=true;
+  if(isAdmin())await syncUp('tx',nt);
+  btn.dataset.loading='false';btn.disabled=false;
+  toast('Transaksi tersimpan');
   save();e.target.reset();$('#cTgl').value=todayStr();fillKat();renderAll();
 });
 
@@ -466,11 +583,14 @@ renderAll=function(){_renderAll();guard()};
 function stampTx(t){
   return Object.assign({by:(me?me.un:'?'),role:(me?me.role:'?'),id:'tx'+Date.now()+Math.random().toString(36).slice(2,8)},t);
 }
-document.addEventListener('click',e=>{
-  const dk=e.target.dataset.delkeg, dt=e.target.dataset.deltx, dp=e.target.dataset.delphoto;
-  if(dk){if(confirm('Hapus kegiatan + semua fotonya?')){kegs=kegs.filter(k=>k.id!==dk);photos=photos.filter(p=>p.kegId!==dk);save();renderAll();if(isAdmin())api('/keg/'+dk,{method:'DELETE'}).catch(()=>{})}return}
-  if(dt){if(confirm('Hapus transaksi ini?')){txs=txs.filter(t=>t.id!==dt);save();renderAll();if(isAdmin())api('/tx/'+dt,{method:'DELETE'}).catch(()=>{})}return}
-  if(dp){if(confirm('Hapus foto ini?')){photos=photos.filter(p=>p.id!==dp);save();renderAll();if(isAdmin())api('/foto/'+dp,{method:'DELETE'}).catch(()=>{})}return}
+document.addEventListener('click',async e=>{
+  const bk=e.target.closest('[data-delkeg]'), bt=e.target.closest('[data-deltx]'), bp=e.target.closest('[data-delphoto]');
+  if(bk){if(await askConfirm({title:'Hapus kegiatan?',body:'Semua foto pada kegiatan ini ikut terhapus.',ok:'Hapus',danger:true})){
+    const dk=bk.dataset.delkeg;kegs=kegs.filter(k=>k.id!==dk);photos=photos.filter(p=>p.kegId!==dk);save();renderAll();if(isAdmin())api('/keg/'+dk,{method:'DELETE'}).catch(()=>{});toast('Kegiatan dihapus')}return}
+  if(bt){if(await askConfirm({title:'Hapus transaksi?',body:'Transaksi ini akan dihapus permanen.',ok:'Hapus',danger:true})){
+    const dt=bt.dataset.deltx;txs=txs.filter(t=>t.id!==dt);save();renderAll();if(isAdmin())api('/tx/'+dt,{method:'DELETE'}).catch(()=>{});toast('Transaksi dihapus')}return}
+  if(bp){if(await askConfirm({title:'Hapus foto?',body:'',ok:'Hapus',danger:true})){
+    const dp=bp.dataset.delphoto;photos=photos.filter(p=>p.id!==dp);save();renderAll();if(isAdmin())api('/foto/'+dp,{method:'DELETE'}).catch(()=>{});toast('Foto dihapus')}return}
 });
 document.addEventListener('change',async e=>{
   const upl=e.target.dataset.upl;
@@ -478,7 +598,7 @@ document.addEventListener('change',async e=>{
   const files=[...e.target.files];
   for(const f of files){
     try{const url=await resizeImage(f,1280,0.65);const np={id:uid(),kegId:upl,dataUrl:url,ts:Date.now()};photos.push(np);save();if(isAdmin())syncUp('foto',{id:np.id,keg_id:np.kegId,data:url})}
-    catch(err){alert('Gagal upload: '+f.name)}
+    catch(err){toast('Gagal upload: '+f.name,'err')}
   }
   save();renderAll();
 });
@@ -494,22 +614,27 @@ $('#btnImport').addEventListener('click',()=>$('#importFile').click());
 $('#importFile').addEventListener('change',e=>{
   const f=e.target.files[0];if(!f)return;
   const r=new FileReader();
-  r.onload=()=>{
+  r.onload=async()=>{
     try{
       const d=JSON.parse(r.result);
       if(!d||!Array.isArray(d.kas))throw 0;
-      if(!confirm('Impor akan MENGGANTI semua data sekarang. Lanjut?'))return;
+      if(!await askConfirm({title:'Impor data?',body:'Data yang ada sekarang akan DIGANTI oleh isi file backup.',ok:'Impor',danger:true}))return;
       txs=d.kas;kegs=d.kegiatan||[];photos=d.photos||[];save();renderAll();
-      alert('Impor sukses: '+txs.length+' transaksi, '+kegs.length+' kegiatan, '+photos.length+' foto');
-    }catch(err){alert('File backup tidak valid')}
+      toast('Impor sukses: '+txs.length+' transaksi, '+kegs.length+' kegiatan, '+photos.length+' foto');
+    }catch(err){toast('File backup tidak valid','err')}
   };
   r.readAsText(f);e.target.value='';
 });
-$('#btnSync').addEventListener('click',async()=>{await syncDown();alert('Sinkron selesai')});
-$('#btnReset').addEventListener('click',()=>{
-  if(!confirm('Hapus SEMUA data? Tidak bisa dibatalkan.'))return;
-  if(!confirm('Yakin? Pastikan sudah backup.'))return;
-  txs=[];kegs=[];photos=[];save();renderAll();
+$('#btnSync').addEventListener('click',async()=>{
+  const btn=$('#btnSync');btn.dataset.loading='true';btn.disabled=true;
+  await syncDown();
+  btn.dataset.loading='false';btn.disabled=false;
+  toast('Sinkron selesai');
+});
+$('#btnReset').addEventListener('click',async()=>{
+  if(!await askConfirm({title:'Hapus SEMUA data?',body:'Semua transaksi, kegiatan, dan foto akan dihapus dari perangkat ini. Tindakan ini tidak bisa dibatalkan.',ok:'Lanjut',danger:true}))return;
+  if(!await askConfirm({title:'Yakin?',body:'Pastikan kamu sudah membuat backup terlebih dahulu.',ok:'Ya, hapus semua',danger:true}))return;
+  txs=[];kegs=[];photos=[];save();renderAll();toast('Semua data lokal dihapus');
 });
 
 /* ============ AUTH ============ */
@@ -531,37 +656,40 @@ if(me&&me.un&&me.role){
   }
 }
 const isAdmin=()=>me&&me.role==='Ajudan';
+/* token auth — selalu bentuk yang benar, apa pun versi sesi yang tersimpan */
+const tokFor=()=>(me&&me.un&&me.role)?(me.un+'|'+me.role):'';
 
 function showLogin(){
   document.body.innerHTML=`
   <div style="min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:20px;background:var(--bg)">
     <div class="card" style="width:100%;max-width:360px">
-      <h2 style="margin-bottom:4px">🐴 Dashboard Kas</h2>
+      <h2 style="margin-bottom:4px">${ic('cash')} Dashboard Kas</h2>
       <div style="color:var(--mut);font-size:12px;margin-bottom:16px">Login untuk melanjutkan</div>
       <form id="lg" style="display:flex;flex-direction:column;gap:10px">
         <input id="lun" placeholder="Username" autocomplete="username" style="padding:11px;border-radius:9px;background:var(--bg2);border:1px solid var(--border);color:var(--txt)">
         <input id="lpw" type="password" placeholder="Password" autocomplete="current-password" style="padding:11px;border-radius:9px;background:var(--bg2);border:1px solid var(--border);color:var(--txt)">
-        <div id="lerr" style="color:#f85149;font-size:12px;display:none">Username / password salah</div>
-        <button type="submit" class="btn" style="padding:11px">Masuk</button>
-      </form>
-    </div>
-  </div>`;
-  document.querySelector('#lg').onsubmit=async e=>{
-    e.preventDefault();
-    const un=document.querySelector('#lun').value.trim();
-    const hash=await sha(document.querySelector('#lpw').value);
-    const u=USERS.find(x=>x.un===un&&x.hash===hash);
-    if(!u){document.querySelector('#lerr').style.display='block';return}
-    me={un:u.un,role:u.role,token:u.un+'|'+u.role};localStorage.setItem('dk_me_v1',JSON.stringify(me));
-    await syncDown();
-    location.reload();
-  };
+        <div id="lerr" style="color:var(--danger);font-size:12px;display:none">Username / password salah</div>
+        <button type="submit" class="btn" style="padding:11px" id="lbtn">Masuk</button>
+        </form>
+        </div>
+        </div>`;
+        document.querySelector('#lg').onsubmit=async e=>{
+        e.preventDefault();
+        const un=document.querySelector('#lun').value.trim();
+        const btn=document.querySelector('#lbtn');btn.dataset.loading='true';btn.disabled=true;
+        const hash=await sha(document.querySelector('#lpw').value);
+        const u=USERS.find(x=>x.un===un&&x.hash===hash);
+        if(!u){btn.dataset.loading='false';btn.disabled=false;document.querySelector('#lerr').style.display='block';return}
+        me={un:u.un,role:u.role,token:u.un+'|'+u.role};localStorage.setItem('dk_me_v1',JSON.stringify(me));
+        await syncDown();
+        location.reload();
+        };
 }
 function renderUserChip(){
   const old=document.querySelector('#uchip');if(old)old.remove();
   const c=document.createElement('div');
   c.id='uchip';
-  const rc=isAdmin()?'#3fb950':'#f0883e';
+  const rc=isAdmin()?'var(--ok)':'var(--warn)';
   c.style.cssText=`display:flex;align-items:center;gap:9px;padding:8px 12px;border:1px solid ${rc};border-radius:10px;background:var(--bg2);margin-bottom:14px;font-size:13px;flex-wrap:wrap`;
   c.innerHTML=`
     <div style="width:32px;height:32px;border-radius:50%;background:${rc};color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex:none">${me.un.slice(0,2).toUpperCase()}</div>
@@ -590,7 +718,7 @@ async function refreshAPIEndpoint(){
 }
 async function api(p,opts={}){
   opts.headers={'Content-Type':'application/json',...(opts.headers||{})};
-  const _tok=(me&&(me.token||(me.un&&me.role?me.un+'|'+me.role:'')))||'';
+  const _tok=tokFor();
   if(_tok)opts.headers['x-auth']=_tok;
   let body=opts.body;
   if(body!==undefined&&body!==null)opts.body=JSON.stringify(body);
@@ -669,33 +797,35 @@ async function syncUp(kind,obj){
 /* indikator status server: ● Online (hijau) / ◌ Offline, data lokal (kuning) */
 function setServerStatus(ok){
   const el=$('#srvStatus');if(!el)return;
-  if(ok){el.textContent='● Server online';el.style.color='#3fb950';el.title='Data tersimpan di server, shared antar device'}
-  else{el.textContent='◌ Offline — data tersimpan lokal';el.style.color='#d29922';el.title='Tap untuk lihat detail diagnostik'}
+  if(ok){el.innerHTML=ic('dot','sm')+' Server online';el.style.color='var(--ok)';el.title='Data tersimpan di server, sinkron antar device'}
+  else{el.innerHTML=ic('ring','sm')+' Offline — data tersimpan lokal';el.style.color='var(--warn)';el.title='Tap untuk lihat detail diagnostik'}
   el.style.cursor='pointer';
   el.onclick=serverDiagnostic;
 }
 /* diagnosa: cek satu-satu kandidat endpoint + tampilkan hasil apa adanya */
 async function serverDiagnostic(){
-  const lines=['🔍 Diagnostik koneksi server',''];
-  lines.push('URL API aktif: '+(API||'(kosong)'));
-  lines.push('Kandidat: '+_API_TRY.length+' endpoint');
-  lines.push('');
+  const rows=[];
   for(const cand of _API_TRY){
-    let r='';
-    const t0=Date.now();
+    const t0=Date.now();let r,ok=false;
     try{
       const ctrl=new AbortController();setTimeout(()=>ctrl.abort(),9000);
-      const res=await fetch(cand+'/data',{signal:ctrl.signal,headers:{'x-auth':'arkavilai|Ajudan'}});
-      r=res.ok?('✅ OK ('+res.status+', '+(Date.now()-t0)+'ms)'):('⚠️ HTTP '+res.status);
-    }catch(e){r='❌ '+e.name+': '+e.message}
-    lines.push(cand.replace('https://','')+' → '+r);
+      const res=await fetch(cand+'/data',{signal:ctrl.signal,headers:{'x-auth':tokFor()}});
+      ok=res.status<500;
+      r=ok?(res.status+' · '+(Date.now()-t0)+' ms'):'HTTP '+res.status;
+    }catch(e){r=e.name+': '+e.message}
+    rows.push({host:cand.replace('https://',''),ok,detail:r});
   }
-  lines.push('');
-  lines.push('URL backend PERMANEN: kas.atlastechcompany.web.id');
-  lines.push('Kalau ❌ tapi internet normal → cek jaringan WiFi/data HP, atau tunggu 1 menit lalu tap lagi.');
-  lines.push('');
-  lines.push('Info: '+(navigator.onLine?'online':'offline')+' | SW: '+(('serviceWorker' in navigator)?'ada':'tidak ada'));
-  alert(lines.join('\n'));
+  const bodyHTML=rows.map(x=>`<div class="kv"><span>${esc(x.host)}</span>`
+    +`<b style="color:${x.ok?'var(--ok)':'var(--danger)'}">${esc(x.ok?'Terjangkau':x.detail)}</b></div>`).join('')
+    +`<div class="kv"><span>Cara buka</span><b>${navigator.onLine?'Online':'Offline'}</b></div>`
+    +`<div class="kv"><span>Service worker</span><b>${('serviceWorker' in navigator)?'aktif':'tidak ada'}</b></div>`;
+  const d=document.createElement('dialog');d.className='dlg';
+  d.innerHTML=`<h3>${ic('search')} Diagnostik koneksi</h3>`
+    +`<p>Hasil uji langsung dari perangkat ini. Kalau server tidak terjangkau padahal internet jalan, coba ganti WiFi ke data seluler (atau sebaliknya) lalu ulangi.</p>`
+    +bodyHTML
+    +`<div class="row"><button class="btn" value="o" style="margin-top:14px">Tutup</button></div>`;
+  d.addEventListener('close',()=>d.remove());
+  document.body.appendChild(d);d.showModal();
 }
 /* ---------- init ---------- */
 $('#todayLbl').textContent='Hari ini: '+fmtDateLong(todayStr());
@@ -722,8 +852,8 @@ async function boot(){
   for(const cand of cands){
     try{
       const ctrl=new AbortController();setTimeout(()=>ctrl.abort(),9000);
-      const r=await fetch(cand+'/data',{signal:ctrl.signal,headers:{'x-auth':'arkavilai|Ajudan'}});
-      if(r.ok){API=cand;localStorage.setItem('dk_api_v1',cand);break}
+      const r=await fetch(cand+'/data',{signal:ctrl.signal,headers:{'x-auth':tokFor()||'arkavilai|Ajudan'}});
+      if(r.status<500){API=cand;localStorage.setItem('dk_api_v1',cand);break}
     }catch(e){}
   }
   if(!API)setServerStatus(false);else setServerStatus(true);
@@ -749,7 +879,9 @@ window.addEventListener('beforeinstallprompt',e=>{
   const btn=document.createElement('button');
   btn.className='btn ghost sm';
   btn.style.cssText='position:fixed;bottom:calc(16px + env(safe-area-inset-bottom,0px));left:14px;right:14px;z-index:99;box-shadow:0 4px 18px rgba(0,0,0,.5)';
-  btn.textContent='⬇ Install Dashboard ke HP';
+  btn.textContent='Install Dashboard ke HP';
+  btn.style.display='inline-flex';btn.style.alignItems='center';btn.style.justifyContent='center';btn.style.gap='6px';
+  btn.innerHTML=ic('download','sm')+' Install Dashboard ke HP';
   btn.onclick=async()=>{
     btn.remove();
     if(deferredPrompt){deferredPrompt.prompt();await deferredPrompt.userChoice;deferredPrompt=null}
@@ -766,7 +898,7 @@ if(isIOS&&!isStandalone){
     sessionStorage.setItem('ioshint','1');
     const d=document.createElement('div');
     d.style.cssText='position:fixed;bottom:calc(70px + env(safe-area-inset-bottom,0px));left:14px;right:14px;background:var(--card);border:1px solid var(--acc);border-radius:10px;padding:10px 12px;font-size:12px;z-index:98;box-shadow:0 4px 18px rgba(0,0,0,.5)';
-    d.innerHTML='📲 Install di iPhone: tekan tombol <b>Share</b> di Safari, lalu pilih <b>Add to Home Screen</b>. <button class="del" style="float:right;font-size:13px">✕</button>';
+    d.innerHTML=ic('phone')+' Install di iPhone: tekan tombol <b>Share</b> di Safari, lalu pilih <b>Add to Home Screen</b>. <button class="del" style="float:right;font-size:13px" aria-label="Tutup">'+ic('x','sm')+'</button>';
     d.querySelector('.del').onclick=()=>d.remove();
     document.body.appendChild(d);
     setTimeout(()=>{if(d.parentNode)d.remove()},15000);
