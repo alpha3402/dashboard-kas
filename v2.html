@@ -7,45 +7,75 @@
 <meta name="theme-color" content="#0d1117">
 <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
 <style>
+:root{
+  --bg:#0d1117; --bg2:#10161f; --card:#161b26; --card2:#1b2230;
+  --border:#242c3d; --border-strong:#303a4f;
+  --txt:#e8ebf2; --mut:#8b93a7;
+  --acc:#4f8cff; --acc-strong:#2f66d6;
+  --ok:#3fb950; --warn:#d29922; --danger:#f85149;
+  --ring:rgba(79,140,255,.55);
+  --font-ui:system-ui,-apple-system,'Segoe UI Variable Text','Segoe UI',sans-serif;
+  --dur:.18s; --ease:cubic-bezier(.32,.72,0,1);
+}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-body{margin:0;background:#0d1117;color:#e6edf3;
-  font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+body{margin:0;background:var(--bg);color:var(--txt);font-family:var(--font-ui);
+  font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased;
   min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:20px}
-.box{max-width:430px;width:100%;background:#161b22;border:1px solid #30363d;
-  border-radius:16px;padding:24px}
-h1{font-size:18px;margin:0 0 4px;text-align:center}
-.sub{font-size:12.5px;color:#8b949e;margin:0 0 18px;text-align:center}
-.step{display:flex;align-items:flex-start;gap:10px;font-size:13px;padding:9px 0;
-  border-bottom:1px solid #21262d}
+.box{max-width:430px;width:100%;background:var(--card);border:1px solid var(--border);
+  border-radius:16px;padding:24px;border-color:var(--border-strong)}
+h1{font-size:24px;margin:0 0 6px;text-align:center;letter-spacing:-.01em;
+  display:flex;align-items:center;justify-content:center;gap:8px}
+.sub{font-size:14px;color:var(--mut);margin:0 0 18px;text-align:center}
+.step{display:flex;align-items:flex-start;gap:10px;font-size:14px;padding:10px 0;
+  border-bottom:1px solid var(--border)}
 .step:last-child{border-bottom:0}
-.ico{flex:none;width:20px;text-align:center;font-size:14px}
-.step .t{flex:1;line-height:1.45}
-.step .t b{color:#e6edf3}
-.mut{color:#8b949e}
-.ok{color:#3fb950}.warn{color:#d29922}.err{color:#f85149}
-.btn{display:block;width:100%;padding:15px;border:0;border-radius:11px;
-  background:#238636;color:#fff;font-size:15.5px;font-weight:700;cursor:pointer;
-  margin-top:16px}
-.btn.alt{background:#21262d;border:1px solid #30363d;color:#e6edf3;margin-top:8px}
-.big{text-align:center;font-size:15px;font-weight:700;margin:14px 0 0}
-.note{font-size:11.5px;color:#8b949e;text-align:center;margin-top:14px;line-height:1.6}
+.ico{flex:none;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center}
+.ic{width:1.15em;height:1.15em;flex:none;stroke:currentColor;fill:none;
+  stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}
+.ic.spin{animation:spin .9s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.step .t{flex:1;line-height:1.5}
+.step .t b{color:var(--txt)}
+.mut{color:var(--mut)}
+.ok{color:var(--ok)}.warn{color:var(--warn)}.err{color:var(--danger)}
+.btn{display:flex;width:100%;align-items:center;justify-content:center;gap:8px;
+  padding:14px;border:0;border-radius:11px;
+  background:var(--acc-strong);color:#fff;font-size:16px;font-family:inherit;
+  font-weight:700;cursor:pointer;margin-top:16px;
+  transition:filter var(--dur) var(--ease),transform var(--dur) var(--ease)}
+.btn:hover{filter:brightness(1.12)}
+.btn:active{transform:translateY(1px)}
+.btn.alt{background:var(--card2);border:1px solid var(--border);color:var(--txt);margin-top:8px}
+.big{text-align:center;font-size:20px;font-weight:700;margin:16px 0 0;
+  display:flex;align-items:center;justify-content:center;gap:8px}
+.note{font-size:12px;color:var(--mut);text-align:center;margin-top:14px;line-height:1.6}
+:focus-visible{outline:2px solid var(--ring);outline-offset:2px;border-radius:6px}
+@media (prefers-reduced-motion: reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 </style>
 </head>
 <body>
+<!-- Ikon: SVG (bukan emoji), stroke seragam -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
+<symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.6v3M12 18.4v3M2.6 12h3M18.4 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M18.7 5.3l-2.1 2.1M7.4 16.6l-2.1 2.1"/></symbol>
+<symbol id="i-ring" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.4" stroke-dasharray="3.6 3.6"/></symbol>
+<symbol id="i-check" viewBox="0 0 24 24"><path d="M4.4 12.6 9.3 17.5 19.6 6.6"/></symbol>
+<symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 3.4 2.6 20.2h18.8L12 3.4Z"/><path d="M12 9.6v4.2M12 16.9v.3"/></symbol>
+<symbol id="i-open" viewBox="0 0 24 24"><path d="M13.6 4.4H19.6V10.4"/><path d="M19.6 4.4 11.4 12.6"/><path d="M18 14.6v4.4a1.6 1.6 0 0 1-1.6 1.6H5.4A1.6 1.6 0 0 1 3.8 19V8a1.6 1.6 0 0 1 1.6-1.6h4.4"/></symbol>
+</defs></svg>
 <div class="box">
-  <h1>🔧 Dashboard Kas</h1>
+  <h1><svg class="ic" aria-hidden="true"><use href="#i-gear"/></svg> Dashboard Kas</h1>
   <p class="sub">Menyiapkan aplikasi. Mohon tunggu…</p>
 
   <div id="steps">
-    <div class="step" id="s1"><div class="ico">◌</div><div class="t">Bersihkan cache lama (service worker)</div></div>
-    <div class="step" id="s2"><div class="ico">◌</div><div class="t">Perbaiki sesi login</div></div>
-    <div class="step" id="s3"><div class="ico">◌</div><div class="t">Cek koneksi ke server</div></div>
-    <div class="step" id="s4"><div class="ico">◌</div><div class="t">Buka dashboard</div></div>
+    <div class="step" id="s1"><div class="ico"><svg class="ic spin" aria-hidden="true"><use href="#i-ring"/></svg></div><div class="t">Bersihkan cache lama</div></div>
+    <div class="step" id="s2"><div class="ico"><svg class="ic" aria-hidden="true"><use href="#i-ring"/></svg></div><div class="t">Perbaiki sesi login</div></div>
+    <div class="step" id="s3"><div class="ico"><svg class="ic" aria-hidden="true"><use href="#i-ring"/></svg></div><div class="t">Cek koneksi ke server</div></div>
+    <div class="step" id="s4"><div class="ico"><svg class="ic" aria-hidden="true"><use href="#i-ring"/></svg></div><div class="t">Buka dashboard</div></div>
   </div>
 
   <div class="big" id="big"></div>
-  <button class="btn" id="go" style="display:none">Buka Dashboard Sekarang</button>
-  <button class="btn alt" id="retry" style="display:none">Coba Lagi</button>
+  <button class="btn" id="go" style="display:none"><svg class="ic" aria-hidden="true"><use href="#i-open"/></svg> Buka Dashboard Sekarang</button>
+  <button class="btn alt" id="retry" style="display:none"><svg class="ic" aria-hidden="true"><use href="#i-ring"/></svg> Coba Lagi</button>
 
   <p class="note" id="note"></p>
 </div>
@@ -53,10 +83,12 @@ h1{font-size:18px;margin:0 0 4px;text-align:center}
 <script>
 const API='https://kas.atlastechcompany.web.id';
 const K_ME='dk_me_v1', K_API='dk_api_v1';
+const ICON=(n,cls)=>'<svg class="ic '+(cls||'')+'" aria-hidden="true"><use href="#i-'+n+'"/></svg>';
 const set=(id,ico,html,cls)=>{
   const s=document.getElementById(id);
-  s.querySelector('.ico').textContent=ico;
-  s.querySelector('.ico').className='ico '+(cls||'');
+  const box=s.querySelector('.ico');
+  box.innerHTML=ICON(ico);
+  box.className='ico '+(cls||'');
   if(html)s.querySelector('.t').innerHTML=html;
 };
 
@@ -104,10 +136,10 @@ async function sendReport(extra){
     for(let i=0;i<localStorage.length;i++){
       const k=localStorage.key(i);
       const v=localStorage.getItem(k)||'';
-      if(k==='dk_me_v1'){
+      if(k===K_ME){
         let parsed=null; try{parsed=JSON.parse(v)}catch(e){}
         ls[k]=parsed?{un:parsed.un,role:parsed.role,tokenFormat:(parsed.token===(parsed.un+'|'+parsed.role)?'ok':(parsed.token?'wrong':'missing'))}:v;
-      }else if(k==='dk_api_v1'){
+      }else if(k===K_API){
         ls[k]=v;
       }else{
         // jangan kirim isi data (privasi) — cukup nama key + panjang
@@ -144,39 +176,39 @@ async function run(){
   await sendReport({phase:'before'});
 
   // 1
-  set('s1','◌','Bersihkan cache lama…');
+  set('s1','ring','Bersihkan cache lama…');
   const r1=await cleanup();
-  set('s1','✅','Cache dibersihkan &nbsp;<span class="mut">('+r1.sw+' SW, '+r1.caches+' cache)</span>','ok');
+  set('s1','check','Cache dibersihkan &nbsp;<span class="mut">('+r1.sw+' SW, '+r1.caches+' cache)</span>','ok');
 
   // 2
-  set('s2','◌','Perbaiki sesi login…');
+  set('s2','ring','Perbaiki sesi login…');
   const r2=healSession();
-  if(r2.ok) set('s2','✅','Sesi login OK &nbsp;<span class="mut">('+r2.msg+')</span>','ok');
-  else set('s2','⚠️','Sesi: <span class="mut">'+r2.msg+' — kamu akan diminta login</span>','warn');
+  if(r2.ok) set('s2','check','Sesi login OK &nbsp;<span class="mut">('+r2.msg+')</span>','ok');
+  else set('s2','alert','Sesi: <span class="mut">'+r2.msg+' — kamu akan diminta login</span>','warn');
 
   // 3
-  set('s3','◌','Cek koneksi ke server…');
+  set('s3','ring','Cek koneksi ke server…');
   const r3=await testAPI();
-  if(r3.ok) set('s3','✅','Server ONLINE &nbsp;<span class="mut">('+r3.status+', '+r3.ms+'ms)</span>','ok');
-  else set('s3','⚠️','Server: <span class="mut">'+(r3.status?('HTTP '+r3.status):r3.err)+' — data tetap aman lokal</span>','warn');
+  if(r3.ok) set('s3','check','Server ONLINE &nbsp;<span class="mut">('+r3.status+', '+r3.ms+'ms)</span>','ok');
+  else set('s3','alert','Server: <span class="mut">'+(r3.status?('HTTP '+r3.status):r3.err)+' — data tetap aman lokal</span>','warn');
 
   // 4
-  set('s4','✅','Siap dibuka','ok');
+  set('s4','check','Siap dibuka','ok');
 
   // laporkan kondisi HP ke server (untuk diagnosa jarak jauh)
   window.__apiTest=r3;
   await sendReport({phase:'complete'});
 
   const dest='./index.html?fresh='+Date.now();
-  document.getElementById('go').style.display='block';
+  document.getElementById('go').style.display='flex';
   document.getElementById('go').onclick=()=>location.replace(dest);
 
   if(r3.ok){
-    document.getElementById('big').innerHTML='<span class="ok">✓ Semua beres — membuka dashboard…</span>';
+    document.getElementById('big').innerHTML='<span class="ok">Semua beres — membuka dashboard…</span>';
     setTimeout(()=>location.replace(dest),1400);
   }else{
     document.getElementById('big').innerHTML='<span class="warn">Server belum terjangkau dari HP ini</span>';
-    document.getElementById('retry').style.display='block';
+    document.getElementById('retry').style.display='flex';
     document.getElementById('retry').onclick=run;
     document.getElementById('note').innerHTML=
       'Cek: (1) internet HP nyala? (2) coba matikan WiFi lalu pakai data seluler (atau sebaliknya)?'+

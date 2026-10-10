@@ -269,9 +269,9 @@ dialog.dlg .row .btn{margin:0}
 <section class="tab" id="tab-kegiatan">
   <div class="card">
     <h2 class="sec" style="margin-top:0"><svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg> Tambah Kegiatan</h2>
-    <form class="f" id="formKeg">
+    <form class="f" id="formKeg" novalidate>
       <div class="row2">
-        <div><label>Nama Kegiatan *</label><input type="text" id="kNama" placeholder="Contoh: Trip Kiluan" required></div>
+        <div><label>Nama Kegiatan *</label><input type="text" id="kNama" placeholder="Contoh: Trip Kiluan" required aria-describedby="kNamaErr"><div class="fielderr" id="kNamaErr">Nama kegiatan wajib diisi.</div></div>
         <div><label>Tanggal *</label><input type="date" id="kTgl" required></div>
       </div>
       <div class="row2">
@@ -295,7 +295,7 @@ dialog.dlg .row .btn{margin:0}
 <section class="tab" id="tab-kas">
   <div class="card">
     <h2 class="sec" style="margin-top:0"><svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg> Input Transaksi</h2>
-    <form class="f" id="formKas">
+    <form class="f" id="formKas" novalidate>
       <div><label>Jenis *</label>
         <div class="radio">
           <label id="lbMasuk" class="on-green"><input type="radio" name="jenis" value="masuk" checked><span><svg class="ic" aria-hidden="true"><use href="#i-in"/></svg> Pemasukan</span></label>
@@ -557,6 +557,12 @@ $('#cNom').addEventListener('input',e=>{
 
 $('#formKeg').addEventListener('submit',async e=>{
   e.preventDefault();
+  const namaEl=$('#kNama'), nerr=document.querySelector('#kNamaErr');
+  if(!namaEl.value.trim()){
+    namaEl.setAttribute('aria-invalid','true');if(nerr)nerr.classList.add('on');
+    namaEl.focus();toast('Nama kegiatan wajib diisi','err');return;
+  }
+  namaEl.removeAttribute('aria-invalid');if(nerr)nerr.classList.remove('on');
   const nk={id:uid(),nama:$('#kNama').value.trim(),tanggal:$('#kTgl').value,waktu:$('#kWaktu').value,lokasi:$('#kLok').value.trim(),desc:$('#kDesc').value.trim(),ts:Date.now(),by:me?me.un:'?',role:me?me.role:'?'};
   kegs.push(nk);save();
   const btn=$('#kSubmit');btn.dataset.loading='true';btn.disabled=true;
@@ -604,9 +610,9 @@ function stampTx(t){
 }
 document.addEventListener('click',async e=>{
   const bk=e.target.closest('[data-delkeg]'), bt=e.target.closest('[data-deltx]'), bp=e.target.closest('[data-delphoto]');
-  if(bk){if(await askConfirm({title:'Hapus kegiatan?',body:'Semua foto pada kegiatan ini ikut terhapus.',ok:'Hapus',danger:true})){
+  if(bk){if(await askConfirm({title:'Hapus kegiatan?',body:'Semua foto pada kegiatan ini ikut terhapus'+(isAdmin()?' (lokal + server)':'')+'.',ok:'Hapus',danger:true})){
     const dk=bk.dataset.delkeg;kegs=kegs.filter(k=>k.id!==dk);photos=photos.filter(p=>p.kegId!==dk);save();renderAll();if(isAdmin())api('/keg/'+dk,{method:'DELETE'}).catch(()=>{});toast('Kegiatan dihapus')}return}
-  if(bt){if(await askConfirm({title:'Hapus transaksi?',body:'Transaksi ini akan dihapus permanen.',ok:'Hapus',danger:true})){
+  if(bt){if(await askConfirm({title:'Hapus transaksi?',body:'Transaksi ini dihapus dari perangkat'+(isAdmin()?' dan dari server':'')+'.',ok:'Hapus',danger:true})){
     const dt=bt.dataset.deltx;txs=txs.filter(t=>t.id!==dt);save();renderAll();if(isAdmin())api('/tx/'+dt,{method:'DELETE'}).catch(()=>{});toast('Transaksi dihapus')}return}
   if(bp){if(await askConfirm({title:'Hapus foto?',body:'',ok:'Hapus',danger:true})){
     const dp=bp.dataset.delphoto;photos=photos.filter(p=>p.id!==dp);save();renderAll();if(isAdmin())api('/foto/'+dp,{method:'DELETE'}).catch(()=>{});toast('Foto dihapus')}return}
