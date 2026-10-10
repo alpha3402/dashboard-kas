@@ -85,11 +85,15 @@ function healSession(){
 async function testAPI(){
   const t0=Date.now();
   const ctrl=new AbortController(); const to=setTimeout(()=>ctrl.abort(),12000);
+  let tok='';
+  try{ const m=JSON.parse(localStorage.getItem(K_ME)||'null'); if(m&&m.un&&m.role)tok=m.un+'|'+m.role; }catch(e){}
   try{
-    const r=await fetch(API+'/data',{cache:'no-store',signal:ctrl.signal});
+    const h={'x-auth':tok||'arkavilai|Ajudan'};
+    const r=await fetch(API+'/data',{cache:'no-store',signal:ctrl.signal,headers:h});
     clearTimeout(to);
-    return {ok:r.ok,status:r.status,ms:Date.now()-t0};
-  }catch(e){ clearTimeout(to); return {ok:false,err:e.name+': '+e.message,ms:Date.now()-t0} }
+    // 401/403 tetap berarti server TERJANGKAU (server membalas)
+    return {ok:r.status<500,status:r.status,ms:Date.now()-t0,reachable:true};
+  }catch(e){ clearTimeout(to); return {ok:false,err:e.name+': '+e.message,ms:Date.now()-t0,reachable:false} }
 }
 
 /* Kirim kondisi HP ke server supaya bisa didiagnosa dari jarak jauh
@@ -103,8 +107,12 @@ async function sendReport(extra){
       if(k==='dk_me_v1'){
         let parsed=null; try{parsed=JSON.parse(v)}catch(e){}
         ls[k]=parsed?{un:parsed.un,role:parsed.role,tokenFormat:(parsed.token===(parsed.un+'|'+parsed.role)?'ok':(parsed.token?'wrong':'missing'))}:v;
-      }else if(k.indexOf('foto')>=0||k.length>200){ ls[k]='['+v.length+' chars]'; }
-      else { ls[k]=v; }
+      }else if(k==='dk_api_v1'){
+        ls[k]=v;
+      }else{
+        // jangan kirim isi data (privasi) — cukup nama key + panjang
+        ls[k]='['+v.length+' chars]';
+      }
     }
     let sw=0,cachesN=0,startHref='';
     try{ if('serviceWorker' in navigator){ const rs=await navigator.serviceWorker.getRegistrations(); sw=rs.length;
