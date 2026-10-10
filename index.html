@@ -564,24 +564,21 @@ function renderUserChip(){
 /* ============ END AUTH ============ */
 
 /* ============ API SYNC (backend shared) ============ */
-const API_BASE='https://kas-api-atlas.loca.lt'; // akan di-override di bawah
+/* URL PERMANEN via Cloudflare Named Tunnel (atlas-kas) — tidak berubah lagi. */
+const API_BASE='https://kas.atlastechcompany.web.id';
 const _API_TRY=[
-  'https://org-vocals-nokia-donor.trycloudflare.com',
-  'https://kas-api-atlas.loca.lt',
+  'https://kas.atlastechcompany.web.id',
   'http://127.0.0.1:8000'
 ];
 let API=localStorage.getItem('dk_api_v1')||'';
-/* buang hanya URL rusak/kosong; URL baru dari discovery tetap dipakai */
-if(API&&!/^https:\/\/[a-z0-9.-]+\.[a-z]{2,}/i.test(API)){localStorage.removeItem('dk_api_v1');API=''}
-function apiURL(p){return (API||_API_TRY[0])+p}
+/* buang URL cache lama; hanya URL permanen yg sah */
+if(API&&API!==API_BASE){localStorage.removeItem('dk_api_v1');API=''}
+function apiURL(p){return (API||API_BASE)+p}
 async function refreshAPIEndpoint(){
-  /* URL tunnel bisa berubah tiap restart VM; ambil dari file JSON di repo.
-     GitHub Pages = origin sendiri, CORS allow-all. */
-  try{
-    const r=await fetch('https://alpha3402.github.io/dashboard-kas/api-endpoint.json?'+Date.now(),{cache:'no-store'});
-    const j=await r.json();
-    if(j&&j.api&&/^https:\/\//.test(j.api)){API=j.api;localStorage.setItem('dk_api_v1',API)}
-  }catch(e){console.warn('refreshAPIEndpoint fail:',e.message)}
+  /* URL backend PERMANEN (Cloudflare Named Tunnel atlas-kas).
+     Tidak perlu discovery lagi — cukup pakai URL tetap. */
+  API=API_BASE;
+  try{localStorage.setItem('dk_api_v1',API)}catch(e){}
 }
 async function api(p,opts={}){
   opts.headers={'Content-Type':'application/json',...(opts.headers||{})};
@@ -685,7 +682,8 @@ async function serverDiagnostic(){
     lines.push(cand.replace('https://','')+' → '+r);
   }
   lines.push('');
-  lines.push('Kalau semua ❌ tapi internet normal → jaringan HP memblokir trycloudflare. Coba pakai data seluler / WiFi lain.');
+  lines.push('URL backend PERMANEN: kas.atlastechcompany.web.id');
+  lines.push('Kalau ❌ tapi internet normal → cek jaringan WiFi/data HP, atau tunggu 1 menit lalu tap lagi.');
   lines.push('');
   lines.push('Info: '+(navigator.onLine?'online':'offline')+' | SW: '+(('serviceWorker' in navigator)?'ada':'tidak ada'));
   alert(lines.join('\n'));
