@@ -24,6 +24,10 @@
   --grn:#34c98e; --red:#ff6b6b; --amber:#f5b942; --purple:#a06bff;
   --ok:#3fb950; --warn:#d29922; --danger:#f85149;
   --ring:rgba(79,140,255,.55);
+  /* Tipografi: peran tetap, bukan nilai acak. Stack sistem = nol unduhan font,
+     tetap tajam offline, tanpa reflow/FOIT (app ini offline-first). */
+  --font-ui:system-ui,-apple-system,'Segoe UI Variable Text','Segoe UI',sans-serif;
+  --fs-meta:12px; --fs-sec:14px; --fs-body:16px; --fs-h:20px; --fs-kpi:30px;
   --dur:.18s; --ease:cubic-bezier(.32,.72,0,1);
 }
 /* Ikon: satu sistem — SVG ber-stroke konsisten (craft-floor: bukan emoji/glyph) */
@@ -31,13 +35,13 @@
     stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;vertical-align:-.18em}
 .ic.sm{width:1em;height:1em}
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:var(--bg);color:var(--txt);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:14px;line-height:1.5}
+body{background:var(--bg);color:var(--txt);font-family:var(--font-ui);font-size:16px;line-height:1.55;-webkit-text-size-adjust:100%}
 .wrap{max-width:1100px;margin:0 auto;padding:0 14px calc(60px + env(safe-area-inset-bottom,0px));padding-top:max(14px,env(safe-area-inset-top,0px))}
 header{padding:18px 0 10px;padding-top:max(18px,env(safe-area-inset-top,0px))}
-header h1{font-size:19px;font-weight:700}
+header h1{font-size:24px;font-weight:700;letter-spacing:-.01em;line-height:1.25}
 header .sub{color:var(--mut);font-size:12px;margin-top:2px}
 nav.tabs{display:flex;gap:6px;position:sticky;top:max(0px,env(safe-area-inset-top,0px));background:var(--bg);padding:10px 0;z-index:10;border-bottom:1px solid var(--border)}
-nav.tabs button{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:6px;background:var(--card);border:1px solid var(--border);color:var(--mut);padding:max(9px,calc(9px + env(safe-area-inset-top,0px)*0.3)) 6px;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;min-height:44px}
+nav.tabs button{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:6px;background:var(--card);border:1px solid var(--border);color:var(--mut);padding:max(9px,calc(9px + env(safe-area-inset-top,0px)*0.3)) 6px;border-radius:9px;font-size:14px;font-weight:600;cursor:pointer;min-height:44px}
 nav.tabs button.on{background:var(--acc-strong);color:#fff;border-color:var(--acc-strong)}
 nav.tabs button:hover:not(.on){color:var(--txt)}
 section.tab{display:none;padding-top:16px}
@@ -48,95 +52,95 @@ section.tab.on{display:block}
 @media(max-width:760px){.g4{grid-template-columns:repeat(2,1fr)}.g2{grid-template-columns:1fr}}
 @media(max-width:480px){
   .g4{grid-template-columns:repeat(2,1fr)}
-  header h1{font-size:17px}
-  .stat .val{font-size:17px}
+  .stat .val{font-size:24px}
   .photos img{width:72px;height:56px}
   table{font-size:12px}
   th,td{padding:7px 8px}
-  nav.tabs button{font-size:11.5px;padding:8px 2px}
+  nav.tabs button{font-size:12px;padding:8px 2px}
   .row2{grid-template-columns:1fr}
 }
 /* touch-friendly: no hover-only affordances, larger hit areas */
 @media(pointer:coarse){
   .del{padding:8px;min-width:36px;min-height:36px}
-  .photo-wrap .px{width:24px;height:24px;font-size:14px}
+  .photo-wrap .px{width:26px;height:26px;font-size:16px}
   .upl{padding:9px 14px}
 }
 /* iOS: prevent text selection on buttons, fix 100vh */
 @supports(-webkit-touch-callout:none){
   body{height:-webkit-fill-available}
   button{-webkit-touch-callout:none;user-select:none}
-  input,textarea{font-size:16px}  /* prevent zoom-on-focus */
+  input,textarea{font-size:16px}  /* prevent zoom-on-focus (16px = no auto-zoom) */
 }
 /* landscape phone: 2-col stats */
 @media(max-width:900px) and (orientation:landscape){
   .g4{grid-template-columns:repeat(4,1fr)}
 }
 .card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px}
-.stat .lbl{font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.4px;font-weight:600}
-.stat .val{font-size:20px;font-weight:750;margin-top:4px}
+.card.tbl{padding:10px 10px}
+.stat .lbl{font-size:12px;color:var(--mut);text-transform:uppercase;letter-spacing:.4px;font-weight:600}
+.stat .val{font-size:30px;font-weight:750;margin-top:4px}
 .stat .val.green{color:var(--grn)} .stat .val.red{color:var(--red)} .stat .val.blue{color:var(--acc)} .stat .val.amber{color:var(--amber)}
-.stat .sub{font-size:11px;color:var(--mut);margin-top:2px}
-h2.sec{font-size:14px;font-weight:700;margin:20px 0 10px;color:var(--txt)}
+.stat .sub{font-size:12px;color:var(--mut);margin-top:2px}
+h2.sec{font-size:20px;font-weight:700;margin:20px 0 10px;color:var(--txt)}
 h2.sec .cnt{color:var(--mut);font-weight:500;font-size:12px;margin-left:6px}
 form.f{display:grid;gap:10px}
 label{font-size:12px;color:var(--mut);font-weight:600;display:block;margin-bottom:4px}
 input[type=text],input[type=number],input[type=date],input[type=time],textarea,select{
   width:100%;background:var(--card2);border:1px solid var(--border);color:var(--txt);
-  border-radius:8px;padding:9px 10px;font-size:14px;font-family:inherit}
+  border-radius:8px;padding:9px 10px;font-size:16px;font-family:inherit}
 input:focus,textarea:focus,select:focus{outline:none;border-color:var(--acc)}
 textarea{resize:vertical;min-height:64px}
 .radio{display:flex;gap:8px}
-.radio label{flex:1;text-align:center;background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:9px;cursor:pointer;color:var(--mut);font-weight:600;margin:0}
+.radio label{flex:1;text-align:center;background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:9px;cursor:pointer;color:var(--mut);font-weight:600;margin:0;font-size:14px}
 .radio input{display:none}
 .radio input:checked + span{color:#fff}
 .radio label.on-green{border-color:var(--grn);background:rgba(52,201,142,.12)}
 .radio label.on-red{border-color:var(--red);background:rgba(255,107,107,.12)}
-button.btn{background:var(--acc-strong);color:#fff;border:none;border-radius:8px;padding:10px 16px;font-size:14px;font-weight:700;cursor:pointer;width:100%}
+button.btn{background:var(--acc-strong);color:#fff;border:none;border-radius:8px;padding:10px 16px;font-size:16px;font-weight:700;cursor:pointer;width:100%}
 button.btn:hover{filter:brightness(1.12)}
 button.btn.ghost{background:var(--card2);border:1px solid var(--border);color:var(--txt)}
 button.btn.sm{width:auto;padding:5px 10px;font-size:12px;border-radius:6px}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .item{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:10px}
 .item .top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
-.item .nama{font-weight:700;font-size:14px}
+.item .nama{font-weight:700;font-size:16px}
 .item .meta{color:var(--mut);font-size:12px;margin-top:2px}
-.item .desc{color:var(--txt);font-size:13px;margin-top:6px;opacity:.85}
-.badge{display:inline-block;font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:20px;text-transform:uppercase;letter-spacing:.4px;white-space:nowrap}
+.item .desc{color:var(--txt);font-size:14px;margin-top:6px;opacity:.85}
+.badge{display:inline-block;font-size:12px;font-weight:700;padding:2px 8px;border-radius:20px;text-transform:uppercase;letter-spacing:.4px;white-space:nowrap}
 .b-green{background:rgba(52,201,142,.15);color:var(--grn)}
 .b-red{background:rgba(255,107,107,.15);color:var(--red)}
 .b-blue{background:rgba(79,140,255,.15);color:var(--acc)}
 .b-amber{background:rgba(245,185,66,.15);color:var(--amber)}
 .b-gray{background:rgba(139,147,167,.15);color:var(--mut)}
-.amount{font-weight:750;font-size:14px;white-space:nowrap}
+.amount{font-weight:750;font-size:16px;white-space:nowrap}
 .amount.in{color:var(--grn)} .amount.out{color:var(--red)}
-.del{background:none;border:none;color:var(--mut);cursor:pointer;font-size:15px;padding:2px 6px;border-radius:5px}
+.del{background:none;border:none;color:var(--mut);cursor:pointer;font-size:16px;padding:2px 6px;border-radius:5px;display:inline-flex;align-items:center;justify-content:center;line-height:1}
 .del:hover{color:var(--red);background:rgba(255,107,107,.1)}
 .photos{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
 .photos img{width:88px;height:66px;object-fit:cover;border-radius:7px;border:1px solid var(--border);cursor:pointer}
 .photo-wrap{position:relative}
-.photo-wrap .px{position:absolute;top:2px;right:2px;background:rgba(0,0,0,.75);color:#fff;border:none;border-radius:50%;width:18px;height:18px;font-size:11px;cursor:pointer;line-height:1}
-table{width:100%;border-collapse:collapse;font-size:13px}
-th{text-align:left;color:var(--mut);font-size:11px;text-transform:uppercase;letter-spacing:.4px;padding:8px 10px;border-bottom:1px solid var(--border)}
+.photo-wrap .px{position:absolute;top:2px;right:2px;background:rgba(0,0,0,.75);color:#fff;border:none;border-radius:50%;width:20px;height:20px;font-size:12px;cursor:pointer;line-height:1;display:inline-flex;align-items:center;justify-content:center}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{text-align:left;color:var(--mut);font-size:12px;text-transform:uppercase;letter-spacing:.4px;padding:8px 10px;border-bottom:1px solid var(--border)}
 td{padding:9px 10px;border-bottom:1px solid var(--border)}
 tr:last-child td{border-bottom:none}
 td.num{text-align:right;font-variant-numeric:tabular-nums}
-.empty{text-align:center;color:var(--mut);padding:34px 12px;font-size:13px;border:1px dashed var(--border);border-radius:10px;margin-top:8px}
+.empty{text-align:center;color:var(--mut);padding:34px 12px;font-size:14px;border:1px dashed var(--border);border-radius:10px;margin-top:8px}
 .chart{display:flex;align-items:flex-end;gap:10px;height:130px;padding:8px 4px 0}
 .chart .col{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;height:100%;justify-content:flex-end}
 .chart .bars{display:flex;gap:3px;align-items:flex-end;width:100%;justify-content:center}
 .chart .bar{width:40%;max-width:20px;border-radius:4px 4px 0 0;min-height:2px}
 .chart .bar.m{background:var(--grn)} .chart .bar.k{background:var(--red)}
-.chart .lbl{font-size:10px;color:var(--mut);white-space:nowrap}
-.legend{display:flex;gap:14px;font-size:11px;color:var(--mut);margin-top:6px}
+.chart .lbl{font-size:12px;color:var(--mut);white-space:nowrap}
+.legend{display:flex;gap:14px;font-size:12px;color:var(--mut);margin-top:6px}
 .legend i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:4px}
-footer{text-align:center;color:var(--mut);font-size:11px;margin-top:26px;padding-top:14px;border-top:1px solid var(--border)}
+footer{text-align:center;color:var(--mut);font-size:12px;margin-top:26px;padding-top:14px;border-top:1px solid var(--border)}
 .grp-title{display:flex;align-items:center;gap:8px;margin:16px 0 8px}
 .grp-title .ln{flex:1;height:1px;background:var(--border)}
 .grp-title span{font-size:12px;font-weight:700;color:var(--mut);text-transform:uppercase;letter-spacing:.5px}
 .upl{display:inline-flex;align-items:center;gap:5px;background:var(--card2);border:1px dashed var(--border);color:var(--mut);font-size:12px;padding:5px 10px;border-radius:7px;cursor:pointer;margin-top:8px}
 .upl:hover{border-color:var(--acc);color:var(--txt)}
-.kv{display:flex;justify-content:space-between;font-size:13px;padding:5px 0;border-bottom:1px solid var(--border)}
+.kv{display:flex;justify-content:space-between;font-size:14px;padding:5px 0;border-bottom:1px solid var(--border)}
 .kv:last-child{border:none}
 /* ---------- craft-floor: permukaan browser, states, gerak ---------- */
 html{color-scheme:dark}
@@ -160,17 +164,17 @@ button:disabled,.btn:disabled,.btn[aria-disabled=true]{opacity:.5;cursor:not-all
   border:2px solid rgba(255,255,255,.45);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 input[aria-invalid=true],textarea[aria-invalid=true],select[aria-invalid=true]{border-color:var(--danger)}
-.fielderr{color:var(--danger);font-size:11.5px;margin-top:4px;display:none}
+.fielderr{color:var(--danger);font-size:12px;margin-top:4px;display:none}
 .fielderr.on{display:block}
 dialog.dlg{border:1px solid var(--border);background:var(--card);color:var(--txt);border-radius:12px;
   padding:18px;max-width:340px;width:calc(100% - 32px);box-shadow:0 14px 44px rgba(0,0,0,.55)}
 dialog.dlg::backdrop{background:rgba(3,6,12,.66)}
-dialog.dlg h3{margin:0 0 6px;font-size:15px}
-dialog.dlg p{margin:0 0 14px;color:var(--mut);font-size:13px;line-height:1.55}
+dialog.dlg h3{margin:0 0 6px;font-size:20px}
+dialog.dlg p{margin:0 0 14px;color:var(--mut);font-size:14px;line-height:1.55}
 dialog.dlg .row{display:flex;gap:8px}
 dialog.dlg .row .btn{margin:0}
 .toast{position:fixed;left:14px;right:14px;bottom:calc(14px + env(safe-area-inset-bottom,0px));z-index:120;
-  background:var(--card2);border:1px solid var(--border);border-radius:11px;padding:11px 13px;font-size:13px;
+  background:var(--card2);border:1px solid var(--border);border-radius:11px;padding:11px 13px;font-size:14px;
   display:flex;gap:9px;align-items:center;box-shadow:0 12px 32px rgba(0,0,0,.45);
   transform:translateY(130%);opacity:0;transition:transform .22s var(--ease),opacity .22s var(--ease);pointer-events:none}
 .toast.on{transform:none;opacity:1}
@@ -294,7 +298,7 @@ dialog.dlg .row .btn{margin:0}
   </div>
 
   <h2 class="sec"><svg class="ic" aria-hidden="true"><use href="#i-book"/></svg> Riwayat Kas</h2>
-  <div class="card" style="padding:0;overflow-x:auto">
+  <div class="card tbl" style="overflow-x:auto">
     <table>
       <thead><tr><th>Tanggal</th><th>Jenis</th><th>Kategori</th><th>Catatan</th><th class="num">Nominal</th><th class="num">Saldo</th><th>Oleh</th><th></th></tr></thead>
       <tbody id="kasBody"></tbody>
@@ -306,7 +310,7 @@ dialog.dlg .row .btn{margin:0}
 <section class="tab" id="tab-data">
   <div class="card">
     <h2 class="sec" style="margin-top:0"><svg class="ic" aria-hidden="true"><use href="#i-db"/></svg> Backup &amp; Restore</h2>
-    <p style="color:var(--mut);font-size:13px;margin-bottom:12px">
+    <p style="color:var(--mut);font-size:14px;margin-bottom:12px">
       Data tersimpan di browser (localStorage). Backup berkala agar tidak hilang saat ganti device / clear browser.
     </p>
     <div class="grid g2">
@@ -317,7 +321,7 @@ dialog.dlg .row .btn{margin:0}
   </div>
   <div class="card" style="margin-top:12px">
     <h2 class="sec"><svg class="ic" aria-hidden="true"><use href="#i-db"/></svg> Ringkasan Penyimpanan</h2>
-    <div id="storeInfo" style="color:var(--mut);font-size:13px"></div>
+    <div id="storeInfo" style="color:var(--mut);font-size:14px"></div>
     <button class="btn ghost sm" id="btnReset" style="margin-top:12px;width:auto"><svg class="ic" aria-hidden="true"><use href="#i-trash"/></svg> Reset Semua Data</button>
     <button class="btn sm" id="btnSync" style="margin-top:8px;width:auto"><svg class="ic" aria-hidden="true"><use href="#i-sync"/></svg> Sinkron Ulang dari Server</button>
   </div>
@@ -424,7 +428,7 @@ function renderDashboard(){
     <div class="card stat"><div class="lbl">Saldo Kas</div><div class="val ${saldo>=0?'green':'red'}">${fmtMoney(saldo)}</div><div class="sub">Total sepanjang waktu</div></div>
     <div class="card stat"><div class="lbl">Masuk Bulan Ini</div><div class="val green">${fmtMoney(masuk)}</div><div class="sub">${BLN[now.getMonth()]} ${now.getFullYear()}</div></div>
     <div class="card stat"><div class="lbl">Keluar Bulan Ini</div><div class="val red">${fmtMoney(keluar)}</div><div class="sub">${BLN[now.getMonth()]} ${now.getFullYear()}</div></div>
-    <div class="card stat"><div class="lbl">Kegiatan</div><div class="val blue">${hariIni.length} <span style="font-size:13px;color:var(--mut)">hari ini</span></div><div class="sub">${akan.length} akan datang</div></div>`;
+    <div class="card stat"><div class="lbl">Kegiatan</div><div class="val blue">${hariIni.length} <span style="font-size:14px;color:var(--mut)">hari ini</span></div><div class="sub">${akan.length} akan datang</div></div>`;
 
   /* chart 6 bulan */
   const months=[];for(let i=5;i>=0;i--){const d=new Date(now.getFullYear(),now.getMonth()-i,1);months.push(`${d.getFullYear()}-${pad(d.getMonth()+1)}`)}
@@ -491,7 +495,7 @@ function renderKas(){
       <td style="color:var(--mut)">${esc(r.x.catatan)||'—'}</td>
       <td class="num"><span class="amount ${r.x.jenis==='masuk'?'in':'out'}">${r.x.jenis==='masuk'?'+':'−'} ${fmtMoney(r.x.nominal)}</span></td>
       <td class="num" style="font-weight:600">${fmtMoney(r.run)}</td>
-      <td style="white-space:nowrap;font-size:11.5px;color:var(--mut)">${r.x.by?esc(r.x.by)+(r.x.role?'<br><span style="opacity:.7">'+esc(r.x.role)+'</span>':''):'—'}</td>
+      <td style="white-space:nowrap;font-size:12px;color:var(--mut)">${r.x.by?esc(r.x.by)+(r.x.role?'<br><span style="opacity:.7">'+esc(r.x.role)+'</span>':''):'—'}</td>
       <td><button class="del" data-deltx="${r.x.id}" title="Hapus" aria-label="Hapus transaksi">${ic('x')}</button></td>
     </tr>`).join('');
 }
@@ -664,11 +668,11 @@ function showLogin(){
   <div style="min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:20px;background:var(--bg)">
     <div class="card" style="width:100%;max-width:360px">
       <h2 style="margin-bottom:4px">${ic('cash')} Dashboard Kas</h2>
-      <div style="color:var(--mut);font-size:12px;margin-bottom:16px">Login untuk melanjutkan</div>
+      <div style="color:var(--mut);font-size:14px;margin-bottom:16px">Login untuk melanjutkan</div>
       <form id="lg" style="display:flex;flex-direction:column;gap:10px">
         <input id="lun" placeholder="Username" autocomplete="username" style="padding:11px;border-radius:9px;background:var(--bg2);border:1px solid var(--border);color:var(--txt)">
         <input id="lpw" type="password" placeholder="Password" autocomplete="current-password" style="padding:11px;border-radius:9px;background:var(--bg2);border:1px solid var(--border);color:var(--txt)">
-        <div id="lerr" style="color:var(--danger);font-size:12px;display:none">Username / password salah</div>
+        <div id="lerr" style="color:var(--danger);font-size:14px;display:none">Username / password salah</div>
         <button type="submit" class="btn" style="padding:11px" id="lbtn">Masuk</button>
         </form>
         </div>
@@ -690,10 +694,10 @@ function renderUserChip(){
   const c=document.createElement('div');
   c.id='uchip';
   const rc=isAdmin()?'var(--ok)':'var(--warn)';
-  c.style.cssText=`display:flex;align-items:center;gap:9px;padding:8px 12px;border:1px solid ${rc};border-radius:10px;background:var(--bg2);margin-bottom:14px;font-size:13px;flex-wrap:wrap`;
+  c.style.cssText=`display:flex;align-items:center;gap:9px;padding:8px 12px;border:1px solid ${rc};border-radius:10px;background:var(--bg2);margin-bottom:14px;font-size:14px;flex-wrap:wrap`;
   c.innerHTML=`
-    <div style="width:32px;height:32px;border-radius:50%;background:${rc};color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex:none">${me.un.slice(0,2).toUpperCase()}</div>
-    <div style="flex:1"><b>${me.un}</b><div style="font-size:11px;color:${rc};font-weight:700">${me.role}</div></div>
+    <div style="width:32px;height:32px;border-radius:50%;background:${rc};color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex:none">${me.un.slice(0,2).toUpperCase()}</div>
+    <div style="flex:1"><b>${me.un}</b><div style="font-size:12px;color:${rc};font-weight:700">${me.role}</div></div>
     <button class="btn ghost sm" id="lo">Keluar</button>`;
   c.querySelector('#lo').onclick=()=>{localStorage.removeItem('dk_me_v1');location.reload()};
   const wrap=document.querySelector('.wrap');wrap.insertBefore(c,wrap.querySelector('nav.tabs'));
@@ -897,7 +901,7 @@ if(isIOS&&!isStandalone){
     if(sessionStorage.getItem('ioshint'))return;
     sessionStorage.setItem('ioshint','1');
     const d=document.createElement('div');
-    d.style.cssText='position:fixed;bottom:calc(70px + env(safe-area-inset-bottom,0px));left:14px;right:14px;background:var(--card);border:1px solid var(--acc);border-radius:10px;padding:10px 12px;font-size:12px;z-index:98;box-shadow:0 4px 18px rgba(0,0,0,.5)';
+    d.style.cssText='position:fixed;bottom:calc(70px + env(safe-area-inset-bottom,0px));left:14px;right:14px;background:var(--card);border:1px solid var(--acc);border-radius:10px;padding:10px 12px;font-size:14px;z-index:98;box-shadow:0 4px 18px rgba(0,0,0,.5)';
     d.innerHTML=ic('phone')+' Install di iPhone: tekan tombol <b>Share</b> di Safari, lalu pilih <b>Add to Home Screen</b>. <button class="del" style="float:right;font-size:13px" aria-label="Tutup">'+ic('x','sm')+'</button>';
     d.querySelector('.del').onclick=()=>d.remove();
     document.body.appendChild(d);
