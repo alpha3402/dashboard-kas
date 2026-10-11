@@ -35,16 +35,28 @@ watchdog + konfigurasi Cloudflare Tunnel).
 - Saat gagal jaringan: toast "Gagal sinkron ke server — data tetap tersimpan lokal"
   dan transaksi masuk antrean `pending` (tidak ada kegagalan senyap).
 - Hapus transaksi/kegiatan ikut terkirim ke server saat role **Ajudan**.
+- Tambah & edit data terkirim ke server untuk **semua role** (endpoint `/tx`,
+  `/keg` melakukan upsert).
 
 ## Role & akun
 
 | Role | Akses |
 |---|---|
-| **Ajudan** | Full: tambah/hapus kegiatan, input kas, upload/hapus foto, backup/reset |
-| **Driver** | Read-only |
+| **Ajudan** | Tambah **dan edit** data, hapus data, upload/hapus foto, backup/reset |
+| **Driver** | Tambah **dan edit** data, upload foto. **Tidak bisa hapus** (tombol hapus disembunyikan) |
 
-Setiap transaksi/kegiatan mencatat **siapa yang input** (kolom "Oleh").
+Akun: `arkavilai` (Ajudan), `raflyakbar` (Ajudan), `leonardus` (Driver), `alam` (Driver).
 Password disimpan sebagai **SHA-256 hash**, bukan plaintext.
+
+### Jejak "siapa" (tag)
+
+- Setiap data punya tag **penginput** (chip biru + ikon orang + nama). Nama ini
+  **tidak berubah** walau diedit orang lain — server mempertahankan `by` asli.
+- Kalau pernah diedit, muncul chip kuning **"diedit oleh <nama> · <waktu>"**.
+- Riwayat Kas punya filter **"Tampilkan input"** untuk menyaring per-orang.
+- Di server, 3 kolom mendukung ini: `by_name` (penginput asli), `edited_by`,
+  `edited_ts`. `ts` (stempel urutan) sengaja **tidak** diubah saat edit supaya
+  tidak memicu perang last-write-wins antar device; sinkron pakai `edited_ts`.
 
 ## Deploy
 
