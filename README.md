@@ -58,6 +58,19 @@ Password disimpan sebagai **SHA-256 hash**, bukan plaintext.
   `edited_ts`. `ts` (stempel urutan) sengaja **tidak** diubah saat edit supaya
   tidak memicu perang last-write-wins antar device; sinkron pakai `edited_ts`.
 
+## Laporan WhatsApp (export chat)
+
+Tab **Data → Laporan untuk WhatsApp**: susun kegiatan + uang kas jadi teks
+siap tempel. Pilih rentang (Hari Ini / Bulan Ini / Semua / custom), isi judul
+opsional, lalu **Salin Laporan**.
+
+- Format: `1. Kegiatan:` (per tanggal, nama kegiatan lalu keterangan di baris
+  bawahnya) dan `2. Kas:` (Balance awal, Uang masuk, daftar pengeluaran, Balance akhir).
+- Judul kegiatan: manual kalau diisi; kalau kosong jadi `Kegiatan (Hari, Tanggal)`.
+- **Balance awal** dihitung dari semua transaksi SEBELUM periode, jadi saldo tetap
+  benar walau laporan tidak dimulai dari awal data.
+- Semua perhitungan lokal (data user sendiri), tidak kirim apa pun ke luar.
+
 ## Deploy
 
 ```bash

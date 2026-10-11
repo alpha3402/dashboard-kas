@@ -245,8 +245,9 @@ dialog.dlg .row .btn{margin:0}
 <symbol id="i-in" viewBox="0 0 24 24"><path d="M12 4.5v15M6 13.5 12 19.5 18 13.5"/></symbol>
 <symbol id="i-out" viewBox="0 0 24 24"><path d="M12 19.5v-15M6 10.5 12 4.5 18 10.5"/></symbol>
 <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3 5 5.6v5.6c0 4.4 2.9 8.2 7 9.8 4.1-1.6 7-5.4 7-9.8V5.6Z"/></symbol>
-<symbol id="i-user" viewBox="0 0 24 24"><path d="M12 12.4a3.7 3.7 0 1 0 0-7.4 3.7 3.7 0 0 0 0 7.4Z"/><path d="M4.6 20.4c0-3.5 3.3-5.9 7.4-5.9s7.4 2.4 7.4 5.9"/></symbol>
-<symbol id="i-edit" viewBox="0 0 24 24"><path d="M4 20h4L18.4 9.6a2.1 2.1 0 0 0-3-3L5 17v3Z"/><path d="M14.6 6.6l3 3"/></symbol>
+<symbol id="i-send" viewBox="0 0 24 24"><path d="M20.5 3.5 3.6 10.2l6.7 2.6 2.6 6.7 7.6-16Z"/><path d="M20.5 3.5 10.3 12.8"/></symbol>
+<symbol id="i-user" viewBox="0 0 24 24"><path d="M12 12.4a3.7 3.7 0 1 0 0-7.4 3.7 3.7 0 0 0 0 7.4Z"/><path d="M5 20.2c0-3.4 3.1-5.6 7-5.6s7 2.2 7 5.6"/></symbol>
+<symbol id="i-edit" viewBox="0 0 24 24"><path d="M4 20h4.2L20 8.2a2.1 2.1 0 0 0-3-3L5.2 17v3Z"/><path d="M15.4 6.6 18.4 9.6"/></symbol>
 </defs></svg>
 <div class="wrap">
 <header>
@@ -345,6 +346,28 @@ dialog.dlg .row .btn{margin:0}
 <!-- ============ DATA ============ -->
 <section class="tab" id="tab-data">
   <div class="card">
+    <h2 class="sec" style="margin-top:0"><svg class="ic" aria-hidden="true"><use href="#i-send"/></svg> Laporan untuk WhatsApp</h2>
+    <p style="color:var(--mut);font-size:14px;margin-bottom:12px">
+      Susun kegiatan &amp; uang kas jadi teks siap tempel ke chat WhatsApp.
+    </p>
+    <form class="f" id="formLap" novalidate>
+      <div class="row2">
+        <div><label for="lapDari">Dari tanggal</label><input type="date" id="lapDari"></div>
+        <div><label for="lapSampai">Sampai tanggal</label><input type="date" id="lapSampai"></div>
+      </div>
+      <div class="fbar" style="margin-bottom:0">
+        <span style="color:var(--mut);font-size:12px;font-weight:600">Cepat:</span>
+        <button type="button" class="btn ghost sm" id="lapHari">Hari Ini</button>
+        <button type="button" class="btn ghost sm" id="lapBulan">Bulan Ini</button>
+        <button type="button" class="btn ghost sm" id="lapSemua">Semua</button>
+      </div>
+      <div><label for="lapJudul">Judul kegiatan <span style="font-weight:400;text-transform:none">(opsional — kosongkan = otomatis dari nama kegiatan)</span></label><input type="text" id="lapJudul" placeholder="Contoh: Kegiatan Kapolres Tanggamus"></div>
+      <button type="button" class="btn" id="btnLapCopy"><svg class="ic" aria-hidden="true"><use href="#i-send"/></svg> Salin Laporan</button>
+    </form>
+    <label for="lapOut" style="margin-top:12px">Pratinjau</label>
+    <textarea id="lapOut" rows="22" readonly spellcheck="false" style="min-height:340px"></textarea>
+  </div>
+  <div class="card" style="margin-top:12px">
     <h2 class="sec" style="margin-top:0"><svg class="ic" aria-hidden="true"><use href="#i-db"/></svg> Backup &amp; Restore</h2>
     <p style="color:var(--mut);font-size:14px;margin-bottom:12px">
       Data tersimpan di browser (localStorage). Backup berkala agar tidak hilang saat ganti device / clear browser.
@@ -1075,6 +1098,145 @@ if(isIOS&&!isStandalone){
   },2500);
 }
 
+/* ================= LAPORAN WHATSAPP ================= */
+const HARI_P=['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+const BLN_P=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+
+/* Ubah 'YYYY-MM-DD' -> objek Date lokal (tanpa geser zona waktu). */
+function dOf(s){const p=String(s||'').split('-').map(Number);
+  if(p.length!==3||!p[0]||!p[1]||!p[2])return null;return new Date(p[0],p[1]-1,p[2])}
+function tanggalIndo(s){const d=dOf(s);return d?`${HARI_P[d.getDay()]}, ${d.getDate()} ${BLN_P[d.getMonth()]} ${d.getFullYear()}`:String(s||'')}
+function tanggalIndoPendek(s){const d=dOf(s);return d?`${d.getDate()} ${BLN_P[d.getMonth()]}`:String(s||'')}
+
+/* Label periode untuk judul laporan:
+   satu hari -> "Hari, Tanggal"  ·  satu bulan -> "1 – 11 Oktober 2026"  ·  lain -> rentang. */
+function periodeLabel(dari,sampai){
+  if(!dari&&!sampai)return '';
+  if(dari&&!sampai)return tanggalIndo(dari);
+  if(!dari&&sampai)return tanggalIndo(sampai);
+  if(dari===sampai)return tanggalIndo(dari);
+  const a=dOf(dari),b=dOf(sampai);
+  if(a&&b&&a.getMonth()===b.getMonth()&&a.getFullYear()===b.getFullYear())
+    return `${a.getDate()} – ${b.getDate()} ${BLN_P[b.getMonth()]} ${b.getFullYear()}`;
+  return `${tanggalIndoPendek(dari)} – ${tanggalIndoPendek(sampai)}`;
+}
+
+/* Pengelompokan kegiatan per tanggal (dipakai laporan & ditampilkan urut). */
+function kegelompokKegiatan(list){
+  const map=new Map();
+  list.forEach(k=>{const t=k.tanggal||'';if(!map.has(t))map.set(t,[]);map.get(t).push(k)});
+  return [...map.entries()].sort((a,b)=>a[0].localeCompare(b[0])).map(([tanggal,items])=>({tanggal,items}));
+}
+
+/* ---------- inti: susun teks laporan ---------- */
+function buildLaporan(dari,sampai,judul){
+  const inKeg=k=>{const t=k.tanggal||'';return (!dari||t>=dari)&&(!sampai||t<=sampai)};
+  const inTx=t=>{const y=t.tanggal||'';return (!dari||y>=dari)&&(!sampai||y<=sampai)};
+
+  const keg=kegs.filter(inKeg).slice().sort((a,b)=>(a.tanggal||'').localeCompare(b.tanggal||'')||((a.waktu||'').localeCompare(b.waktu||''))||((a.ts||0)-(b.ts||0)));
+  const list=txs.filter(inTx).slice().sort((a,b)=>(a.tanggal||'').localeCompare(b.tanggal||'')||((a.ts||0)-(b.ts||0)));
+
+  const masuk=list.filter(t=>t.jenis==='masuk').reduce((s,t)=>s+(+t.nominal||0),0);
+  const keluar=list.filter(t=>t.jenis==='keluar').reduce((s,t)=>s+(+t.nominal||0),0);
+
+  /* Saldo awal = total semua transaksi SEBELUM periode (agar saldo tetap benar
+     walau periode tidak mulai dari awal data). */
+  let saldoAwal=0;
+  if(dari) txs.forEach(t=>{if((t.tanggal||'')<dari)saldoAwal+=(t.jenis==='masuk'?1:-1)*(+t.nominal||0)});
+
+  const label=periodeLabel(dari,sampai);
+
+  const L=[];
+  /* ---------- 1. KEGIATAN ---------- */
+  {
+    /* Judul: manual kalau diisi, kalau tidak -> "Kegiatan" + (Hari, Tanggal).
+       Tanggal: kalau kegiatan hanya di 1 hari pakai hari itu, kalau lebih pakai rentang. */
+    const title=(judul||'').trim()||'Kegiatan';
+    const kdates=[...new Set(keg.map(k=>k.tanggal||''))].filter(Boolean).sort();
+    const kDate=kdates.length===1?tanggalIndo(kdates[0]):label;
+    L.push('1. Kegiatan:');
+    L.push(kDate?`${title} (${kDate}):`:`${title}:`);
+    if(!keg.length){
+      L.push('(tidak ada kegiatan pada periode ini)');
+    }else{
+      const grp=kegelompokKegiatan(keg);
+      grp.forEach(g=>{
+        if(grp.length>1)L.push('');                       /* pemisah antar tanggal */
+        if(grp.length>1)L.push(`_${tanggalIndo(g.tanggal)}_`);
+        g.items.forEach((k,i)=>{
+          const pre=(k.nama||'(tanpa nama)');
+          L.push(`- ${pre}`);
+          const d=(k.desc||'').trim();                    /* keterangan di baris bawahnya */
+          if(d)d.split(String.fromCharCode(10)).forEach(x=>L.push('  '+x.trim()));
+        });
+      });
+    }
+  }
+
+  L.push('');
+  /* ---------- 2. KAS ---------- */
+  L.push('2. Kas:');
+  L.push(`Laporan Uang Kas${label?` (${label})`:''}:`);
+  L.push('');
+  L.push(`Balance: ${fmtRpRaw(saldoAwal)}`);
+  L.push('');
+  L.push(`Uang masuk: ${fmtRpRaw(masuk)}`);
+  const keluarList=list.filter(t=>t.jenis==='keluar');
+  if(keluarList.length)L.push('');
+  keluarList.forEach(t=>{
+    const nm=(t.catatan||'').trim()||t.kat||'Pengeluaran';
+    L.push(`- ${nm} = ${fmtRpRaw(+t.nominal||0)}`);
+  });
+  L.push('');
+  L.push(`Balance: ${fmtRpRaw(saldoAwal+masuk-keluar)}`);
+  return L.join('\n');
+}
+
+/* Rp polos "Rp1.000.000" untuk laporan (bukan format mata uang lokal). */
+const fmtRpRaw=n=>'Rp'+new Intl.NumberFormat('id-ID').format(Math.round(+n||0));
+
+function renderLaporan(){
+  const out=$('#lapOut');if(!out)return;
+  const d=$('#lapDari').value,s=$('#lapSampai').value,j=$('#lapJudul').value;
+  out.value=(d&&s&&d>s)?'⚠ Tanggal "Dari" harus lebih awal atau sama dengan "Sampai".':buildLaporan(d,s,j);
+}
+function setLapRange(dari,sampai){
+  $('#lapDari').value=dari||'';$('#lapSampai').value=sampai||'';renderLaporan();
+}
+$('#lapHari').addEventListener('click',()=>setLapRange(todayStr(),todayStr()));
+$('#lapBulan').addEventListener('click',()=>{const t=new Date();
+  setLapRange(`${t.getFullYear()}-${pad(t.getMonth()+1)}-01`,todayStr())});
+$('#lapSemua').addEventListener('click',()=>setLapRange('',''));
+['lapDari','lapSampai','lapJudul'].forEach(id=>{
+  $('#'+id).addEventListener('change',renderLaporan);
+  $('#'+id).addEventListener('input',renderLaporan);
+});
+$('#btnLapCopy').addEventListener('click',async()=>{
+  const txt=$('#lapOut').value;
+  try{await navigator.clipboard.writeText(txt);toast('Laporan disalin — tempel ke WhatsApp')}
+  catch(e){const t=$('#lapOut');t.removeAttribute('readonly');t.select();
+    try{document.execCommand('copy');toast('Laporan disalin — tempel ke WhatsApp')}
+    catch(e2){toast('Tekan lama lalu pilih Salin','warn')}
+    t.setAttribute('readonly','');}
+});
+/* Refresh laporan tiap data berubah + saat tab Data dibuka. */
+const _renderLaporanOnly=renderLaporan;
+const _rootRenderAll=renderAll;
+renderAll=function(){_rootRenderAll();_renderLaporanOnly()};
+document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()=>{
+  if(b.dataset.tab==='data')setTimeout(renderLaporan,0)}));
+document.addEventListener('DOMContentLoaded',()=>{
+  const t=new Date();
+  $('#lapDari').value=`${t.getFullYear()}-${pad(t.getMonth()+1)}-01`;
+  $('#lapSampai').value=todayStr();
+  renderLaporan();
+});
+if(document.readyState!=='loading'){
+  const t=new Date();
+  $('#lapDari').value=`${t.getFullYear()}-${pad(t.getMonth()+1)}-01`;
+  $('#lapSampai').value=todayStr();
+  renderLaporan();
+}
 </script>
 </body>
 </html>
