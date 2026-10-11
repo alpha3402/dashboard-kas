@@ -941,7 +941,11 @@ async function syncDown(){
     // 2) data lokal: menang kalau LEBIH BARU (edited_ts untuk edit, ts untuk input);
     //    item yg belum ada di server di-push naik (semua user boleh input)
     const curKegs=JSON.parse(localStorage.getItem(K_KEG)||'[]');
-    const curTxs=JSON.parse(localStorage.getItem(K_KAS)||'[]');
+    const resetKas=+d.kas_reset_ts||0;
+    // Reset kas server mengalahkan cache transaksi lama di perangkat mana pun.
+    // Kegiatan/foto tidak ikut disentuh; transaksi baru setelah reset tetap dipertahankan.
+    const curTxs=JSON.parse(localStorage.getItem(K_KAS)||'[]')
+      .filter(t=>Math.max(t.edited_ts||0,t.ts||0)>resetKas);
     const curPhotos=JSON.parse(localStorage.getItem(K_PHO)||'[]');
     // patokan waktu efektif: edit terakhir menang atas stempel input asli
     const stamp=o=>Math.max(o.edited_ts||0,o.ts||0);
