@@ -450,10 +450,13 @@ function askConfirm({title='Konfirmasi',body='',ok='Lanjutkan',cancel='Batal',da
   return new Promise(res=>{
     const d=document.createElement('dialog');d.className='dlg';
     d.innerHTML=`<h3>${esc(title)}</h3>${body?`<p>${body}</p>`:''}
-      <div class="row"><button class="btn ghost" value="c">${esc(cancel)}</button>
-      <button class="btn" value="o"${danger?' style="background:var(--danger)"':''}>${esc(ok)}</button></div>`;
+      <div class="row"><button type="button" class="btn ghost" value="c">${esc(cancel)}</button>
+      <button type="button" class="btn" value="o"${danger?' style="background:var(--danger)"':''}>${esc(ok)}</button></div>`;
     d.addEventListener('close',()=>{res(d.returnValue==='o');d.remove()});
-    document.body.appendChild(d);d.showModal();
+    document.body.appendChild(d);
+    d.querySelector('[value="c"]').onclick=()=>{d.returnValue='c';d.close()};
+    d.querySelector('[value="o"]').onclick=()=>{d.returnValue='o';d.close()};
+    d.showModal();
   });
 }
 /* toast ringan (pengganti alert utk feedback non-blokir) */
