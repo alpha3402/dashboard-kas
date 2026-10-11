@@ -112,6 +112,21 @@ button.btn.sm{width:auto;padding:5px 10px;font-size:12px;border-radius:6px}
 .b-blue{background:rgba(79,140,255,.15);color:var(--acc)}
 .b-amber{background:rgba(245,185,66,.15);color:var(--amber)}
 .b-gray{background:rgba(139,147,167,.15);color:var(--mut)}
+/* tag penanda "siapa" (penginput / editor) */
+.chip{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;padding:2px 7px;border-radius:20px;
+  background:var(--acc-soft);color:var(--acc);white-space:nowrap;letter-spacing:.2px;vertical-align:middle}
+.chip.you{background:rgba(52,201,142,.14);color:var(--grn)}
+.chip.edit{background:rgba(245,185,66,.14);color:var(--amber)}
+.chip .ic{width:.95em;height:.95em}
+.tagrow{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:8px}
+.act{display:flex;gap:2px;align-items:center;flex:none}
+.ico-btn{background:none;border:none;color:var(--mut);cursor:pointer;font-size:16px;padding:2px 6px;border-radius:5px;
+  display:inline-flex;align-items:center;justify-content:center;line-height:1}
+.ico-btn:hover{color:var(--acc);background:var(--acc-soft)}
+.fbar{display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap}
+.fbar label{margin:0;white-space:nowrap}
+.fbar select{width:auto;min-width:150px;flex:1;max-width:280px}
+@media(pointer:coarse){.ico-btn{padding:8px;min-width:36px;min-height:36px}}
 .amount{font-weight:750;font-size:16px;white-space:nowrap}
 .amount.in{color:var(--grn)} .amount.out{color:var(--red)}
 .del{background:none;border:none;color:var(--mut);cursor:pointer;font-size:16px;padding:2px 6px;border-radius:5px;display:inline-flex;align-items:center;justify-content:center;line-height:1}
@@ -230,6 +245,8 @@ dialog.dlg .row .btn{margin:0}
 <symbol id="i-in" viewBox="0 0 24 24"><path d="M12 4.5v15M6 13.5 12 19.5 18 13.5"/></symbol>
 <symbol id="i-out" viewBox="0 0 24 24"><path d="M12 19.5v-15M6 10.5 12 4.5 18 10.5"/></symbol>
 <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3 5 5.6v5.6c0 4.4 2.9 8.2 7 9.8 4.1-1.6 7-5.4 7-9.8V5.6Z"/></symbol>
+<symbol id="i-user" viewBox="0 0 24 24"><path d="M12 12.4a3.7 3.7 0 1 0 0-7.4 3.7 3.7 0 0 0 0 7.4Z"/><path d="M4.6 20.4c0-3.5 3.3-5.9 7.4-5.9s7.4 2.4 7.4 5.9"/></symbol>
+<symbol id="i-edit" viewBox="0 0 24 24"><path d="M4 20h4L18.4 9.6a2.1 2.1 0 0 0-3-3L5 17v3Z"/><path d="M14.6 6.6l3 3"/></symbol>
 </defs></svg>
 <div class="wrap">
 <header>
@@ -313,6 +330,10 @@ dialog.dlg .row .btn{margin:0}
   </div>
 
   <h2 class="sec"><svg class="ic" aria-hidden="true"><use href="#i-book"/></svg> Riwayat Kas</h2>
+  <div class="fbar">
+    <label for="fAuthor"><svg class="ic sm" aria-hidden="true"><use href="#i-user"/></svg> Tampilkan input</label>
+    <select id="fAuthor"></select>
+  </div>
   <div class="card tbl" style="overflow-x:auto">
     <table>
       <thead><tr><th>Tanggal</th><th>Jenis</th><th>Kategori</th><th>Catatan</th><th class="num">Nominal</th><th class="num">Saldo</th><th>Oleh</th><th></th></tr></thead>
@@ -372,6 +393,35 @@ function daysBetween(a,b){return Math.round((new Date(b+'T00:00:00')-new Date(a+
 const esc=s=>String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 /* ikon (satu sistem SVG) */
 const ic=(n,cls='')=>`<svg class="ic ${cls}" aria-hidden="true"><use href="#i-${n}"/></svg>`;
+/* ---------- tag "siapa": penginput (by) & editor terakhir ---------- */
+const byOf=o=>o&&(o.by_name||o.by)||'';
+const isMine=o=>{const b=byOf(o);return !!(b&&me&&b===me.un)};
+function ownerChip(o){
+  const b=byOf(o);if(!b)return '';
+  return `<span class="chip${isMine(o)?' you':''}" title="Diinput oleh ${esc(b)}">${ic('user','sm')}${esc(b)}</span>`;
+}
+function editorNote(o){
+  if(!o||!o.edited_by)return '';
+  const t=o.edited_ts?new Date(o.edited_ts).toLocaleString('id-ID',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'';
+  return `<span class="chip edit" title="Terakhir diubah ${esc(t)}">${ic('edit','sm')}${esc(o.edited_by)}${t?' · '+esc(t):''}</span>`;
+}
+/* filter "tampilkan input" (Kas) — nilai disimpan di satu tempat */
+let fAuthor='';
+function authorNames(){
+  const s=new Set();
+  USERS.forEach(u=>s.add(u.un));
+  txs.forEach(t=>{const b=byOf(t);if(b)s.add(b)});
+  kegs.forEach(k=>{const b=byOf(k);if(b)s.add(b)});
+  return [...s].filter(Boolean).sort();
+}
+function fillAuthorFilter(){
+  const sel=$('#fAuthor');if(!sel)return;
+  const cur=(sel.value!==undefined&&sel.value!==null&&sel.value!=='')?sel.value:fAuthor;
+  sel.innerHTML='<option value="">Semua orang</option>'
+    +authorNames().map(n=>`<option value="${esc(n)}">${esc(n)}${(me&&n===me.un)?' (saya)':''}</option>`).join('');
+  sel.value=authorNames().includes(cur)?cur:'';
+  fAuthor=sel.value;
+}
 /* dialog konfirmasi bertema — menggantikan confirm() bawaan browser */
 function askConfirm({title='Konfirmasi',body='',ok='Lanjutkan',cancel='Batal',danger=false}={}){
   return new Promise(res=>{
@@ -478,8 +528,12 @@ function kegCards(list){
       <div><div class="nama">${esc(k.nama)} ${badge}</div>
       <div class="meta">${fmtDateLong(k.tanggal)}${k.waktu?' · '+k.waktu:''}${k.lokasi?' · '+esc(k.lokasi):''}</div>
       ${k.desc?`<div class="desc">${esc(k.desc)}</div>`:''}
-      ${photoStrip(k.id)}</div>
-      <button class="del" data-delkeg="${k.id}" title="Hapus" aria-label="Hapus kegiatan">${ic('x')}</button>
+      ${photoStrip(k.id)}
+      <div class="tagrow">${ownerChip(k)}${editorNote(k)}</div></div>
+      <div class="act">
+        <button class="ico-btn" data-editkeg="${k.id}" title="Edit kegiatan" aria-label="Edit kegiatan">${ic('edit')}</button>
+        <button class="del" data-delkeg="${k.id}" title="Hapus" aria-label="Hapus kegiatan">${ic('x')}</button>
+      </div>
     </div></div>`;
   }).join('');
 }
@@ -499,9 +553,10 @@ function renderKegiatan(){
 /* ---------- render: kas ---------- */
 function renderKas(){
   const sorted=txs.slice().sort((a,b)=>a.tanggal.localeCompare(b.tanggal)||a.ts-b.ts);
-  let run=0; const rows=sorted.map(x=>{run+=x.jenis==='masuk'?x.nominal:-x.nominal;return {x,run}});
+  let run=0; let rows=sorted.map(x=>{run+=x.jenis==='masuk'?x.nominal:-x.nominal;return {x,run}});
+  if(fAuthor)rows=rows.filter(r=>byOf(r.x)===fAuthor);
   const body=$('#kasBody');
-  if(!rows.length){body.innerHTML='<tr><td colspan="8"><div class="empty">Belum ada transaksi. Input lewat form di atas.</div></td></tr>';return}
+  if(!rows.length){body.innerHTML='<tr><td colspan="8"><div class="empty">'+(fAuthor?'Tidak ada transaksi dari '+esc(fAuthor)+'.':'Belum ada transaksi. Input lewat form di atas.')+'</div></td></tr>';return}
   body.innerHTML=rows.slice().reverse().map(r=>`
     <tr>
       <td style="white-space:nowrap">${fmtDate(r.x.tanggal)}</td>
@@ -510,8 +565,11 @@ function renderKas(){
       <td style="color:var(--mut)">${esc(r.x.catatan)||'—'}</td>
       <td class="num"><span class="amount ${r.x.jenis==='masuk'?'in':'out'}">${r.x.jenis==='masuk'?'+':'−'} ${fmtMoney(r.x.nominal)}</span></td>
       <td class="num" style="font-weight:600">${fmtMoney(r.run)}</td>
-      <td style="white-space:nowrap;font-size:12px;color:var(--mut)">${r.x.by?esc(r.x.by)+(r.x.role?'<br><span style="opacity:.7">'+esc(r.x.role)+'</span>':''):'—'}</td>
-      <td><button class="del" data-deltx="${r.x.id}" title="Hapus" aria-label="Hapus transaksi">${ic('x')}</button></td>
+      <td style="white-space:nowrap">${ownerChip(r.x)}${editorNote(r.x)}</td>
+      <td style="white-space:nowrap"><div class="act">
+        <button class="ico-btn" data-edittx="${r.x.id}" title="Edit transaksi" aria-label="Edit transaksi">${ic('edit')}</button>
+        <button class="del" data-deltx="${r.x.id}" title="Hapus" aria-label="Hapus transaksi">${ic('x')}</button>
+      </div></td>
     </tr>`).join('');
 }
 
@@ -563,10 +621,13 @@ $('#formKeg').addEventListener('submit',async e=>{
     namaEl.focus();toast('Nama kegiatan wajib diisi','err');return;
   }
   namaEl.removeAttribute('aria-invalid');if(nerr)nerr.classList.remove('on');
-  const nk={id:uid(),nama:$('#kNama').value.trim(),tanggal:$('#kTgl').value,waktu:$('#kWaktu').value,lokasi:$('#kLok').value.trim(),desc:$('#kDesc').value.trim(),ts:Date.now(),by:me?me.un:'?',role:me?me.role:'?'};
+  const tglEl=$('#kTgl');
+  if(!tglEl.value){tglEl.setAttribute('aria-invalid','true');tglEl.focus();toast('Tanggal wajib diisi','err');return}
+  tglEl.removeAttribute('aria-invalid');
+  const nk={id:uid(),nama:$('#kNama').value.trim(),tanggal:$('#kTgl').value,waktu:$('#kWaktu').value,lokasi:$('#kLok').value.trim(),desc:$('#kDesc').value.trim(),ts:Date.now(),by:me?me.un:'?',role:me?me.role:'?',by_name:(me?me.un:'?'),edited_by:null,edited_ts:null};
   kegs.push(nk);save();
   const btn=$('#kSubmit');btn.dataset.loading='true';btn.disabled=true;
-  if(isAdmin())await syncUp('keg',nk);
+  await syncUp('keg',nk);
   btn.dataset.loading='false';btn.disabled=false;
   toast('Kegiatan tersimpan');
   save();e.target.reset();$('#kTgl').value=todayStr();renderAll();
@@ -586,29 +647,109 @@ $('#formKas').addEventListener('submit',async e=>{
     nomEl.focus();toast('Nominal harus lebih dari 0','err');return;
   }
   nomEl.removeAttribute('aria-invalid');if(errEl)errEl.classList.remove('on');
-  const nt={id:uid(),tanggal:$('#cTgl').value,jenis:$('input[name=jenis]:checked').value,nominal:nom,kat:$('#cKat').value,catatan:$('#cCat').value.trim(),ts:Date.now(),by:me?me.un:'?',role:me?me.role:'?'};
+  const tglEl=$('#cTgl');
+  if(!tglEl.value){tglEl.setAttribute('aria-invalid','true');tglEl.focus();toast('Tanggal wajib diisi','err');return}
+  tglEl.removeAttribute('aria-invalid');
+  const nt={id:uid(),tanggal:$('#cTgl').value,jenis:$('input[name=jenis]:checked').value,nominal:nom,kat:$('#cKat').value,catatan:$('#cCat').value.trim(),ts:Date.now(),by:me?me.un:'?',role:me?me.role:'?',by_name:(me?me.un:'?'),edited_by:null,edited_ts:null};
   txs.push(nt);save();
   const btn=$('#cSubmit');btn.dataset.loading='true';btn.disabled=true;
-  if(isAdmin())await syncUp('tx',nt);
+  await syncUp('tx',nt);
   btn.dataset.loading='false';btn.disabled=false;
   toast('Transaksi tersimpan');
   save();e.target.reset();$('#cTgl').value=todayStr();fillKat();renderAll();
 });
 
-/* ---------- role: Driver = read-only (lihat, upload foto), Ajudan = full ---------- */
+/* ---------- role: semua user boleh input & edit; HAPUS hanya Ajudan ---------- */
 function guard(){
   if(isAdmin())return;
-  document.querySelectorAll('#kSubmit, #cSubmit, #btnReset, .upl, .del, [data-deltx], [data-delkeg], [data-delphoto]').forEach(el=>{
+  document.querySelectorAll('#btnReset, .del, [data-deltx], [data-delkeg], [data-delphoto]').forEach(el=>{
     el.style.display='none';
   });
 }
 const _renderAll=renderAll;
-renderAll=function(){_renderAll();guard()};
+renderAll=function(){_renderAll();fillAuthorFilter();guard()};
 
 function stampTx(t){
-  return Object.assign({by:(me?me.un:'?'),role:(me?me.role:'?'),id:'tx'+Date.now()+Math.random().toString(36).slice(2,8)},t);
+  return Object.assign({by:(me?me.un:'?'),role:(me?me.role:'?'),by_name:(me?me.un:'?'),id:'tx'+Date.now()+Math.random().toString(36).slice(2,8)},t);
+}
+/* ---------- dialog edit generik (keterangan/isi) ---------- */
+function openEdit({title,fields,onSave}){
+  return new Promise(res=>{
+    const d=document.createElement('dialog');d.className='dlg';
+    const inner=fields.map(f=>{
+      const id='ef_'+f.name, val=esc(f.value==null?'':String(f.value));
+      if(f.type==='textarea')
+        return `<div style="margin-bottom:10px;text-align:left"><label for="${id}">${esc(f.label)}</label><textarea id="${id}" data-f="${f.name}">${val}</textarea></div>`;
+      if(f.type==='select')
+        return `<div style="margin-bottom:10px;text-align:left"><label for="${id}">${esc(f.label)}</label><select id="${id}" data-f="${f.name}">${(f.options||[]).map(o=>`<option${o===String(f.value)?' selected':''}>${esc(o)}</option>`).join('')}</select></div>`;
+      if(f.type==='number')
+        return `<div style="margin-bottom:10px;text-align:left"><label for="${id}">${esc(f.label)}</label><input type="text" inputmode="numeric" id="${id}" data-f="${f.name}" value="${val}"></div>`;
+      if(f.type==='date')
+        return `<div style="margin-bottom:10px;text-align:left"><label for="${id}">${esc(f.label)}</label><input type="date" id="${id}" data-f="${f.name}" value="${val}"></div>`;
+      return `<div style="margin-bottom:10px;text-align:left"><label for="${id}">${esc(f.label)}</label><input type="text" id="${id}" data-f="${f.name}" value="${val}"></div>`;
+    }).join('');
+    d.innerHTML=`<h3>${ic('edit')} ${esc(title)}</h3><form id="ef" style="margin-top:6px">${inner}
+      <div class="row" style="margin-top:6px"><button type="button" class="btn ghost" value="c">Batal</button>
+      <button type="submit" class="btn" value="o">Simpan</button></div></form>`;
+    d.addEventListener('close',()=>{const ok=d.returnValue==='o';d.remove();res(ok)});
+    document.body.appendChild(d);d.showModal();
+    /* angka: format ribuan saat diketik */
+    d.querySelectorAll('[data-f][inputmode=numeric]').forEach(inp=>{
+      inp.value=inp.value?fmtNum(+String(inp.value).replace(/\D/g,'')):'';
+      inp.addEventListener('input',e=>{const x=e.target.value.replace(/\D/g,'');e.target.value=x?fmtNum(+x):''});
+    });
+    d.querySelector('#ef').addEventListener('submit',async e=>{
+      e.preventDefault();
+      const out={};d.querySelectorAll('[data-f]').forEach(el=>{out[el.dataset.f]=el.value});
+      const btn=e.submitter||d.querySelector('.btn[value=o]');
+      if(btn){btn.dataset.loading='true';btn.disabled=true}
+      try{await onSave(out);d.returnValue='o';d.close()}
+      catch(err){if(btn){btn.dataset.loading='false';btn.disabled=false}toast('Gagal menyimpan perubahan','err')}
+    });
+    d.querySelector('.btn.ghost').addEventListener('click',()=>{d.returnValue='c';d.close()});
+  });
 }
 document.addEventListener('click',async e=>{
+  /* ---- EDIT (semua user boleh) ---- */
+  const ek=e.target.closest('[data-editkeg]'), et=e.target.closest('[data-edittx]');
+  if(ek){
+    const k=kegs.find(x=>x.id===ek.dataset.editkeg);if(!k)return;
+    await openEdit({title:'Edit Kegiatan',fields:[
+      {name:'nama',label:'Nama Kegiatan *',value:k.nama},
+      {name:'tanggal',label:'Tanggal',type:'date',value:k.tanggal},
+      {name:'waktu',label:'Waktu',value:k.waktu||''},
+      {name:'lokasi',label:'Lokasi',value:k.lokasi||''},
+      {name:'desc',label:'Keterangan',type:'textarea',value:k.desc||''},
+    ],onSave:async v=>{
+      if(!String(v.nama||'').trim())throw new Error('nama kosong');
+      const tgl=v.tanggal||k.tanggal;
+      Object.assign(k,{nama:v.nama.trim(),tanggal:tgl,waktu:v.waktu.trim(),lokasi:v.lokasi.trim(),desc:v.desc.trim(),
+        by_name:byOf(k)||(me?me.un:'?'),edited_by:(me?me.un:'?'),edited_ts:Date.now()});
+      if(!k.ts)k.ts=Date.now();
+      save();renderAll();await syncUp('keg',k);toast('Perubahan tersimpan');
+    }});
+    return;
+  }
+  if(et){
+    const t=txs.find(x=>x.id===et.dataset.edittx);if(!t)return;
+    await openEdit({title:'Edit Transaksi',fields:[
+      {name:'tanggal',label:'Tanggal',type:'date',value:t.tanggal},
+      {name:'jenis',label:'Jenis',type:'select',options:['masuk','keluar'],value:t.jenis},
+      {name:'nominal',label:'Nominal (Rp)',type:'number',value:t.nominal},
+      {name:'kat',label:'Kategori',value:t.kat},
+      {name:'catatan',label:'Catatan',value:t.catatan||''},
+    ],onSave:async v=>{
+      const nom=+String(v.nominal||'').replace(/\D/g,'');
+      if(!nom||nom<=0)throw new Error('nominal');
+      Object.assign(t,{tanggal:v.tanggal||t.tanggal,
+        jenis:(v.jenis==='masuk'||v.jenis==='keluar')?v.jenis:t.jenis,
+        nominal:nom,kat:(v.kat||'').trim()||t.kat,catatan:v.catatan.trim(),
+        by_name:byOf(t)||(me?me.un:'?'),edited_by:(me?me.un:'?'),edited_ts:Date.now()});
+      if(!t.ts)t.ts=Date.now();
+      save();renderAll();await syncUp('tx',t);toast('Perubahan tersimpan');
+    }});
+    return;
+  }
   const bk=e.target.closest('[data-delkeg]'), bt=e.target.closest('[data-deltx]'), bp=e.target.closest('[data-delphoto]');
   if(bk){if(await askConfirm({title:'Hapus kegiatan?',body:'Semua foto pada kegiatan ini ikut terhapus'+(isAdmin()?' (lokal + server)':'')+'.',ok:'Hapus',danger:true})){
     const dk=bk.dataset.delkeg;kegs=kegs.filter(k=>k.id!==dk);photos=photos.filter(p=>p.kegId!==dk);save();renderAll();if(isAdmin())api('/keg/'+dk,{method:'DELETE'}).catch(()=>{});toast('Kegiatan dihapus')}return}
@@ -618,11 +759,12 @@ document.addEventListener('click',async e=>{
     const dp=bp.dataset.delphoto;photos=photos.filter(p=>p.id!==dp);save();renderAll();if(isAdmin())api('/foto/'+dp,{method:'DELETE'}).catch(()=>{});toast('Foto dihapus')}return}
 });
 document.addEventListener('change',async e=>{
+  if(e.target.id==='fAuthor'){fAuthor=e.target.value;renderKas();return}
   const upl=e.target.dataset.upl;
   if(!upl)return;
   const files=[...e.target.files];
   for(const f of files){
-    try{const url=await resizeImage(f,1280,0.65);const np={id:uid(),kegId:upl,dataUrl:url,ts:Date.now()};photos.push(np);save();if(isAdmin())syncUp('foto',{id:np.id,keg_id:np.kegId,data:url})}
+    try{const url=await resizeImage(f,1280,0.65);const np={id:uid(),kegId:upl,dataUrl:url,ts:Date.now()};photos.push(np);save();syncUp('foto',{id:np.id,keg_id:np.kegId,data:url})}
     catch(err){toast('Gagal upload: '+f.name,'err')}
   }
   save();renderAll();
@@ -769,29 +911,32 @@ async function syncDown(){
     const outKeg={},outTx={},outFoto={};
 
     // 1) server data sebagai basis
-    Object.values(sKeg).forEach(k=>outKeg[k.id]={id:k.id,nama:k.nama,tanggal:k.tanggal,waktu:k.waktu||'',lokasi:k.lokasi||'',desc:k.desc||'',ts:k.ts||0,by:k.by,role:k.role});
-    Object.values(sTx).forEach(t=>outTx[t.id]={id:t.id,tanggal:t.tanggal,jenis:t.jenis,nominal:t.nominal,kat:t.kat,catatan:t.catatan||'',ts:t.ts||0,by:t.by,role:t.role});
+    Object.values(sKeg).forEach(k=>outKeg[k.id]={id:k.id,nama:k.nama,tanggal:k.tanggal,waktu:k.waktu||'',lokasi:k.lokasi||'',desc:k.desc||'',ts:k.ts||0,by:k.by,role:k.role,by_name:k.by_name||k.by,edited_by:k.edited_by||null,edited_ts:k.edited_ts||null});
+    Object.values(sTx).forEach(t=>outTx[t.id]={id:t.id,tanggal:t.tanggal,jenis:t.jenis,nominal:t.nominal,kat:t.kat,catatan:t.catatan||'',ts:t.ts||0,by:t.by,role:t.role,by_name:t.by_name||t.by,edited_by:t.edited_by||null,edited_ts:t.edited_ts||null});
     Object.values(sFoto).forEach(f=>outFoto[f.id]={id:f.id,kegId:f.keg_id,data:null,ts:f.ts});
 
-    // 2) data lokal: menang kalau ts lebih baru; push kalau belum ada di server
+    // 2) data lokal: menang kalau LEBIH BARU (edited_ts untuk edit, ts untuk input);
+    //    item yg belum ada di server di-push naik (semua user boleh input)
     const curKegs=JSON.parse(localStorage.getItem(K_KEG)||'[]');
     const curTxs=JSON.parse(localStorage.getItem(K_KAS)||'[]');
     const curPhotos=JSON.parse(localStorage.getItem(K_PHO)||'[]');
+    // patokan waktu efektif: edit terakhir menang atas stempel input asli
+    const stamp=o=>Math.max(o.edited_ts||0,o.ts||0);
     curKegs.forEach(k=>{
       const s=sKeg[k.id];
-      if(!s){if(isAdmin())newKeg.push(k)}
-      if(!s||(k.ts||0)>=(s.ts||0))outKeg[k.id]=k;
+      if(!s)newKeg.push(k);
+      if(!s||stamp(k)>=stamp(s))outKeg[k.id]=k;
     });
     curTxs.forEach(t=>{
       const s=sTx[t.id];
-      if(!s){if(isAdmin())newTx.push(t)}
-      if(!s||(t.ts||0)>=(s.ts||0))outTx[t.id]=t;
+      if(!s)newTx.push(t);
+      if(!s||stamp(t)>=stamp(s))outTx[t.id]=t;
     });
     curPhotos.forEach(p=>{
       const s=sFoto[p.id];
       // foto lokal punya dataUrl; server pakai field 'data' — samakan
       const loc={id:p.id,kegId:p.kegId||p.keg_id,data:p.dataUrl||p.data,ts:p.ts||0};
-      if(!s){if(isAdmin()&&loc.data)newFoto.push({id:loc.id,keg_id:loc.kegId,data:loc.data})}
+      if(!s&&loc.data)newFoto.push({id:loc.id,keg_id:loc.kegId,data:loc.data});
       if(!s)outFoto[p.id]=loc;
     });
 
