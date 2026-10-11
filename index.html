@@ -776,8 +776,19 @@ document.addEventListener('click',async e=>{
   const bk=e.target.closest('[data-delkeg]'), bt=e.target.closest('[data-deltx]'), bp=e.target.closest('[data-delphoto]');
   if(bk){if(await askConfirm({title:'Hapus kegiatan?',body:'Semua foto pada kegiatan ini ikut terhapus'+(isAdmin()?' (lokal + server)':'')+'.',ok:'Hapus',danger:true})){
     const dk=bk.dataset.delkeg;kegs=kegs.filter(k=>k.id!==dk);photos=photos.filter(p=>p.kegId!==dk);save();renderAll();if(isAdmin())api('/keg/'+dk,{method:'DELETE'}).catch(()=>{});toast('Kegiatan dihapus')}return}
-  if(bt){if(await askConfirm({title:'Hapus transaksi?',body:'Transaksi ini dihapus dari perangkat'+(isAdmin()?' dan dari server':'')+'.',ok:'Hapus',danger:true})){
-    const dt=bt.dataset.deltx;txs=txs.filter(t=>t.id!==dt);save();renderAll();if(isAdmin())api('/tx/'+dt,{method:'DELETE'}).catch(()=>{});toast('Transaksi dihapus')}return}
+  if(bt){if(await askConfirm({title:'Hapus transaksi?',body:'Transaksi ini dihapus permanen dari perangkat dan server.',ok:'Hapus',danger:true})){
+    const dt=bt.dataset.deltx;
+    const old=txs.find(t=>t.id===dt); if(!old)return;
+    txs=txs.filter(t=>t.id!==dt);save();renderAll();
+    try{
+      const r=await api('/tx/'+dt,{method:'DELETE'});
+      if(!r||!r.ok)throw new Error('server menolak penghapusan');
+      toast('Transaksi dihapus permanen');
+    }catch(err){
+      txs.push(old);save();renderAll();
+      toast('Gagal hapus dari server — coba lagi','err');
+    }
+  }return}
   if(bp){if(await askConfirm({title:'Hapus foto?',body:'',ok:'Hapus',danger:true})){
     const dp=bp.dataset.delphoto;photos=photos.filter(p=>p.id!==dp);save();renderAll();if(isAdmin())api('/foto/'+dp,{method:'DELETE'}).catch(()=>{});toast('Foto dihapus')}return}
 });
@@ -925,6 +936,8 @@ async function syncDown(){
   try{
     const d=await api('/data',{method:'GET'});
     if(!d.kegiatan||!d.transaksi)return;
+    const deletedTx={};
+    (d.deleted_transaksi||[]).forEach(x=>deletedTx[x.id]=+x.deleted_ts||0);
     const sKeg={},sTx={},sFoto={};
     d.kegiatan.forEach(k=>sKeg[k.id]=k);
     d.transaksi.forEach(t=>sTx[t.id]=t);
@@ -955,6 +968,9 @@ async function syncDown(){
       if(!s||stamp(k)>=stamp(s))outKeg[k.id]=k;
     });
     curTxs.forEach(t=>{
+      const tomb=deletedTx[t.id]||0;
+      // Tombstone server menang atas salinan transaksi yang sudah dihapus.
+      if(tomb && stamp(t)<=tomb)return;
       const s=sTx[t.id];
       if(!s)newTx.push(t);
       if(!s||stamp(t)>=stamp(s))outTx[t.id]=t;
