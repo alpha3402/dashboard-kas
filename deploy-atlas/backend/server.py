@@ -76,7 +76,7 @@ def admin_only(user):
     if user["role"] != "Ajudan":
         raise HTTPException(403, "hanya ajudan")
 
-def write_only(user):
+def write_only(user=Depends(verify)):
     if user["role"] == "Pimpinan":
         raise HTTPException(403, "role Pimpinan hanya bisa melihat")
     return user
