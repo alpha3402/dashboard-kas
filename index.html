@@ -362,10 +362,15 @@ dialog.dlg .row .btn{margin:0}
         <button type="button" class="btn ghost sm" id="lapSemua">Semua</button>
       </div>
       <div><label for="lapJudul">Judul kegiatan <span style="font-weight:400;text-transform:none">(opsional — kosongkan = otomatis dari nama kegiatan)</span></label><input type="text" id="lapJudul" placeholder="Contoh: Kegiatan Kapolres Tanggamus"></div>
-      <button type="button" class="btn" id="btnLapCopy"><svg class="ic" aria-hidden="true"><use href="#i-send"/></svg> Salin Laporan</button>
     </form>
-    <label for="lapOut" style="margin-top:12px">Pratinjau</label>
-    <textarea id="lapOut" rows="22" readonly spellcheck="false" style="min-height:340px"></textarea>
+    <div class="grid g2" style="margin-top:12px">
+      <button type="button" class="btn" id="btnLapKegCopy"><svg class="ic" aria-hidden="true"><use href="#i-send"/></svg> Salin Laporan Kegiatan</button>
+      <button type="button" class="btn" id="btnLapKasCopy"><svg class="ic" aria-hidden="true"><use href="#i-send"/></svg> Salin Laporan Kas</button>
+    </div>
+    <label for="lapKegOut" style="margin-top:16px">Pratinjau Laporan Kegiatan</label>
+    <textarea id="lapKegOut" rows="12" readonly spellcheck="false" style="min-height:240px"></textarea>
+    <label for="lapKasOut" style="margin-top:16px">Pratinjau Laporan Uang Kas</label>
+    <textarea id="lapKasOut" rows="22" readonly spellcheck="false" style="min-height:340px"></textarea>
   </div>
   <div class="card" style="margin-top:12px">
     <h2 class="sec" style="margin-top:0"><svg class="ic" aria-hidden="true"><use href="#i-db"/></svg> Backup &amp; Restore</h2>
@@ -1152,76 +1157,57 @@ function kegelompokKegiatan(list){
 }
 
 /* ---------- inti: susun teks laporan ---------- */
-function buildLaporan(dari,sampai,judul){
+function buildLaporanKegiatan(dari,sampai,judul){
   const inKeg=k=>{const t=k.tanggal||'';return (!dari||t>=dari)&&(!sampai||t<=sampai)};
-  const inTx=t=>{const y=t.tanggal||'';return (!dari||y>=dari)&&(!sampai||y<=sampai)};
-
   const keg=kegs.filter(inKeg).slice().sort((a,b)=>(a.tanggal||'').localeCompare(b.tanggal||'')||((a.waktu||'').localeCompare(b.waktu||''))||((a.ts||0)-(b.ts||0)));
-  const list=txs.filter(inTx).slice().sort((a,b)=>(a.tanggal||'').localeCompare(b.tanggal||'')||((a.ts||0)-(b.ts||0)));
-
-  const masuk=list.filter(t=>t.jenis==='masuk').reduce((s,t)=>s+(+t.nominal||0),0);
-  const keluar=list.filter(t=>t.jenis==='keluar').reduce((s,t)=>s+(+t.nominal||0),0);
-
-  /* Saldo awal = total semua transaksi SEBELUM periode (agar saldo tetap benar
-     walau periode tidak mulai dari awal data). */
-  let saldoAwal=0;
-  if(dari) txs.forEach(t=>{if((t.tanggal||'')<dari)saldoAwal+=(t.jenis==='masuk'?1:-1)*(+t.nominal||0)});
-
-  const label=periodeLabel(dari,sampai);
-
-  const L=[];
-  /* ---------- 1. KEGIATAN ---------- */
-  {
-    /* Judul: manual kalau diisi, kalau tidak -> "Kegiatan" + (Hari, Tanggal).
-       Tanggal: kalau kegiatan hanya di 1 hari pakai hari itu, kalau lebih pakai rentang. */
-    const title=(judul||'').trim()||'Kegiatan';
-    const kdates=[...new Set(keg.map(k=>k.tanggal||''))].filter(Boolean).sort();
-    const kDate=kdates.length===1?tanggalIndo(kdates[0]):label;
-    L.push('1. Kegiatan:');
-    L.push(kDate?`${title} (${kDate}):`:`${title}:`);
-    if(!keg.length){
-      L.push('(tidak ada kegiatan pada periode ini)');
-    }else{
-      const grp=kegelompokKegiatan(keg);
-      grp.forEach(g=>{
-        if(grp.length>1)L.push('');                       /* pemisah antar tanggal */
-        if(grp.length>1)L.push(`_${tanggalIndo(g.tanggal)}_`);
-        g.items.forEach((k,i)=>{
-          const pre=(k.nama||'(tanpa nama)');
-          L.push(`- ${pre}`);
-          const d=(k.desc||'').trim();                    /* keterangan di baris bawahnya */
-          if(d)d.split(String.fromCharCode(10)).forEach(x=>L.push('  '+x.trim()));
-        });
-      });
-    }
-  }
-
-  L.push('');
-  /* ---------- 2. KAS ---------- */
-  L.push('2. Kas:');
-  L.push(`Laporan Uang Kas${label?` (${label})`:''}:`);
-  L.push('');
-  L.push(`Balance: ${fmtRpRaw(saldoAwal)}`);
-  L.push('');
-  L.push(`Uang masuk: ${fmtRpRaw(masuk)}`);
-  const keluarList=list.filter(t=>t.jenis==='keluar');
-  if(keluarList.length)L.push('');
-  keluarList.forEach(t=>{
-    const nm=(t.catatan||'').trim()||t.kat||'Pengeluaran';
-    L.push(`- ${nm} = ${fmtRpRaw(+t.nominal||0)}`);
+  const label=periodeLabel(dari,sampai), title=(judul||'').trim()||'Kegiatan';
+  const L=['*Laporan Kegiatan*',''];
+  const kdates=[...new Set(keg.map(k=>k.tanggal||''))].filter(Boolean).sort();
+  L.push(`*${title}${label?` (${label})`:''}*`,'');
+  if(!keg.length)L.push('_Tidak ada kegiatan pada periode ini._');
+  else kegelompokKegiatan(keg).forEach((g,gi)=>{
+    if(gi)L.push('','—————————————','');
+    L.push(`*${tanggalIndo(g.tanggal)}*`);
+    g.items.forEach(k=>{
+      L.push(`- ${k.nama||'(tanpa nama)'}`);
+      const d=(k.desc||'').trim();if(d)d.split(String.fromCharCode(10)).forEach(x=>L.push(`  ${x.trim()}`));
+    });
   });
-  L.push('');
-  L.push(`Balance: ${fmtRpRaw(saldoAwal+masuk-keluar)}`);
-  return L.join('\n');
+  return L.join('\\n');
+}
+function buildLaporanKas(dari,sampai){
+  const inTx=t=>{const y=t.tanggal||'';return (!dari||y>=dari)&&(!sampai||y<=sampai)};
+  const all=txs.slice().sort((a,b)=>(a.tanggal||'').localeCompare(b.tanggal||'')||((a.ts||0)-(b.ts||0)));
+  const list=all.filter(inTx), dates=[...new Set(list.map(t=>t.tanggal||''))].filter(Boolean).sort();
+  let saldo=0;if(dari)all.forEach(t=>{if((t.tanggal||'')<dari)saldo+=(t.jenis==='masuk'?1:-1)*(+t.nominal||0)});
+  const L=['*Laporan Uang Kas*',''];
+  if(!dates.length){L.push('_Tidak ada transaksi kas pada periode ini._');return L.join('\\n')}
+  dates.forEach((date,di)=>{
+    const day=list.filter(t=>t.tanggal===date), masuk=day.filter(t=>t.jenis==='masuk').reduce((s,t)=>s+(+t.nominal||0),0), keluar=day.filter(t=>t.jenis==='keluar'), total=keluar.reduce((s,t)=>s+(+t.nominal||0),0);
+    if(di)L.push('','—————————————','');
+    L.push(`*${tanggalIndo(date)}*`,'',`Balance: *${fmtRpSpace(saldo)}*`,`Uang Masuk: ${masuk?`*${fmtRpSpace(masuk)}*`:'-'}`,'','Pengeluaran:');
+    if(!keluar.length)L.push('-');
+    keluar.forEach((t,i)=>L.push(`${i+1}. ${((t.catatan||'').trim()||t.kat||'Pengeluaran')}: *${fmtRpSpace(+t.nominal||0)}*`));
+    if(keluar.length>1)L.push('',`Total: *${fmtRpSpace(total)}*`);
+    saldo+=masuk-total;L.push(`Balance: *${fmtRpSpace(saldo)}*`);
+  });
+  return L.join('\\n');
+}
+function fmtRpSpace(n){return 'Rp. '+new Intl.NumberFormat('id-ID').format(Math.round(+n||0))}
+function buildLaporan(dari,sampai,judul){
+  return buildLaporanKegiatan(dari,sampai,judul)+'\\n\\n—————————————\\n\\n'+buildLaporanKas(dari,sampai);
 }
 
-/* Rp polos "Rp1.000.000" untuk laporan (bukan format mata uang lokal). */
-const fmtRpRaw=n=>'Rp'+new Intl.NumberFormat('id-ID').format(Math.round(+n||0));
-
 function renderLaporan(){
-  const out=$('#lapOut');if(!out)return;
+  const a=$('#lapKegOut'),b=$('#lapKasOut');if(!a||!b)return;
   const d=$('#lapDari').value,s=$('#lapSampai').value,j=$('#lapJudul').value;
-  out.value=(d&&s&&d>s)?'⚠ Tanggal "Dari" harus lebih awal atau sama dengan "Sampai".':buildLaporan(d,s,j);
+  if(d&&s&&d>s){a.value=b.value='⚠ Tanggal "Dari" harus lebih awal atau sama dengan "Sampai".';return}
+  a.value=buildLaporanKegiatan(d,s,j);b.value=buildLaporanKas(d,s);
+}
+async function copyLap(id){
+  const txt=$(id).value;
+  try{await navigator.clipboard.writeText(txt);toast('Laporan disalin — tempel ke WhatsApp')}
+  catch(e){const t=$(id);t.removeAttribute('readonly');t.select();try{document.execCommand('copy');toast('Laporan disalin — tempel ke WhatsApp')}catch(e2){toast('Tekan lama lalu pilih Salin','warn')}t.setAttribute('readonly','')}
 }
 function setLapRange(dari,sampai){
   $('#lapDari').value=dari||'';$('#lapSampai').value=sampai||'';renderLaporan();
@@ -1234,14 +1220,8 @@ $('#lapSemua').addEventListener('click',()=>setLapRange('',''));
   $('#'+id).addEventListener('change',renderLaporan);
   $('#'+id).addEventListener('input',renderLaporan);
 });
-$('#btnLapCopy').addEventListener('click',async()=>{
-  const txt=$('#lapOut').value;
-  try{await navigator.clipboard.writeText(txt);toast('Laporan disalin — tempel ke WhatsApp')}
-  catch(e){const t=$('#lapOut');t.removeAttribute('readonly');t.select();
-    try{document.execCommand('copy');toast('Laporan disalin — tempel ke WhatsApp')}
-    catch(e2){toast('Tekan lama lalu pilih Salin','warn')}
-    t.setAttribute('readonly','');}
-});
+$('#btnLapKegCopy').addEventListener('click',()=>copyLap('#lapKegOut'));
+$('#btnLapKasCopy').addEventListener('click',()=>copyLap('#lapKasOut'));
 /* Refresh laporan tiap data berubah + saat tab Data dibuka. */
 const _renderLaporanOnly=renderLaporan;
 const _rootRenderAll=renderAll;
