@@ -17,6 +17,7 @@ USERS = [
     {"un": "raflyakbar",  "pw": "rafly123",     "role": "Ajudan"},
     {"un": "leonardus",   "pw": "leo123",       "role": "Driver"},
     {"un": "alam",        "pw": "alam123",      "role": "Driver"},
+    {"un": "hudi",        "pw": "hudi123",       "role": "Pimpinan"},
 ]
 
 def sha(s): return hashlib.sha256(s.encode()).hexdigest()
@@ -74,6 +75,11 @@ def verify(r: Request):
 def admin_only(user):
     if user["role"] != "Ajudan":
         raise HTTPException(403, "hanya ajudan")
+
+def write_only(user):
+    if user["role"] == "Pimpinan":
+        raise HTTPException(403, "role Pimpinan hanya bisa melihat")
+    return user
 
 # ---------- MODELS ----------
 class Keg(BaseModel):
@@ -142,7 +148,7 @@ def del_tx(tid: str, user=Depends(verify)):
     return {"ok": True}
 
 @app.post("/foto")
-def add_foto(f: Foto, user=Depends(verify)):
+def add_foto(f: Foto, user=Depends(write_only)):
     c = db()
     c.execute("INSERT OR REPLACE INTO foto (id,keg_id,data,ts) VALUES (?,?,?,?)",
               (f.id, f.keg_id, f.data, int(time.time()*1000)))

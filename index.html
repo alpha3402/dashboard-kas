@@ -646,6 +646,7 @@ $('#cNom').addEventListener('input',e=>{
 
 $('#formKeg').addEventListener('submit',async e=>{
   e.preventDefault();
+  if(!canWrite()){toast('Role Pimpinan hanya bisa melihat','warn');return}
   const namaEl=$('#kNama'), nerr=document.querySelector('#kNamaErr');
   if(!namaEl.value.trim()){
     namaEl.setAttribute('aria-invalid','true');if(nerr)nerr.classList.add('on');
@@ -670,6 +671,7 @@ $('#formKeg').addEventListener('submit',async e=>{
 
 $('#formKas').addEventListener('submit',async e=>{
   e.preventDefault();
+  if(!canWrite()){toast('Role Pimpinan hanya bisa melihat','warn');return}
   const nom=+$('#cNom').value.replace(/\D/g,'');
   const nomEl=$('#cNom'), errEl=document.querySelector('#cNomErr');
   if(!nom||nom<=0){
@@ -694,8 +696,14 @@ $('#formKas').addEventListener('submit',async e=>{
 function guard(){
   if(isAdmin())return;
   document.querySelectorAll('#btnReset, .del, [data-deltx], [data-delkeg], [data-delphoto]').forEach(el=>{
-    el.style.display='none';
-  });
+       el.style.display='none';
+     });
+     if(isReadOnly()){
+       document.querySelectorAll('#formKeg, #formKas, #btnImport, #btnSync, [data-editkeg], [data-edittx], .upl, input[type=file]').forEach(el=>{
+         el.style.display='none';
+         if(el.tagName==='FORM')el.querySelectorAll('input,select,textarea,button').forEach(x=>x.disabled=true);
+       });
+     }
 }
 const _renderAll=renderAll;
 renderAll=function(){_renderAll();fillAuthorFilter();guard()};
@@ -851,7 +859,8 @@ const USERS=[
   {un:"arkavilai",hash:"3f55be7b5526a4ec1da76d84fe1dc695fdea3068c1538027e979c2f2378b8b79",role:"Ajudan"},
   {un:"raflyakbar",hash:"b26b97451018f7eb59e3533383184f65f68559feca4f73d86913cceb8531c99e",role:"Ajudan"},
   {un:"leonardus",hash:"115f652493147e000824c52a7c6cb2cb776fbdbe8f67680832f00b21c315fe3d",role:"Driver"},
-  {un:"alam",hash:"77341ae75b2e708f2203e7fcdd5ba2ff921415b089e278b84fc9992d62cea27d",role:"Driver"}
+  {un:"alam",hash:"77341ae75b2e708f2203e7fcdd5ba2ff921415b089e278b84fc9992d62cea27d",role:"Driver"},
+  {un:"hudi",hash:"8c21297e04f7afe5a1d36d22754eff0dec80a9c6f929feadd27f49683b17ae7a",role:"Pimpinan"}
 ];
 const sha=async s=>{const b=new TextEncoder().encode(s);const h=await crypto.subtle.digest('SHA-256',b);return [...new Uint8Array(h)].map(x=>x.toString(16).padStart(2,'0')).join('')};
 let me=JSON.parse(localStorage.getItem('dk_me_v1')||'null');
@@ -865,6 +874,8 @@ if(me&&me.un&&me.role){
   }
 }
 const isAdmin=()=>me&&me.role==='Ajudan';
+const isReadOnly=()=>me&&me.role==='Pimpinan';
+const canWrite=()=>!!me&&!isReadOnly();
 /* token auth — selalu bentuk yang benar, apa pun versi sesi yang tersimpan */
 const tokFor=()=>(me&&me.un&&me.role)?(me.un+'|'+me.role):'';
 
