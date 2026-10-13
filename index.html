@@ -1187,7 +1187,8 @@ function buildLaporanKegiatan(dari,sampai,judul){
     if(gi)L.push('','—————————————','');
     L.push(`*${tanggalIndo(g.tanggal)}*`);
     g.items.forEach(k=>{
-      L.push(`- ${k.nama||'(tanpa nama)'}`);
+      const jam=k.waktu?` (${k.waktu})`:'';
+      L.push(`- ${k.nama||'(tanpa nama)'}${jam}`);
       const d=(k.desc||'').trim();if(d)d.split(String.fromCharCode(10)).forEach(x=>L.push(`  ${x.trim()}`));
     });
   });
