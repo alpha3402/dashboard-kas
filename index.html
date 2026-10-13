@@ -549,6 +549,12 @@ function renderDashboard(){
       <span class="amount ${x.jenis==='masuk'?'in':'out'}">${x.jenis==='masuk'?'+':'−'} ${fmtMoney(x.nominal)}</span>
     </div></div>`).join(''):'<div class="empty">Belum ada transaksi</div>';
 }
+function fmtInputTime(ts){
+  const d=new Date(+ts||0);
+  if(!ts||Number.isNaN(d.getTime()))return 'Waktu input tidak tersedia';
+  return d.toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'})+' · '+d.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});
+}
+function inputNote(x){return `<span title="Waktu data pertama kali diinput">Diinput: ${fmtInputTime(x.ts)}</span>`}
 function kegCards(list){
   return list.map(k=>{
     const t=todayStr(); let badge;
@@ -560,7 +566,7 @@ function kegCards(list){
       <div class="meta">${fmtDateLong(k.tanggal)}${k.waktu?' · '+k.waktu:''}${k.lokasi?' · '+esc(k.lokasi):''}</div>
       ${k.desc?`<div class="desc">${esc(k.desc)}</div>`:''}
       ${photoStrip(k.id)}
-      <div class="tagrow">${ownerChip(k)}${editorNote(k)}</div></div>
+      <div class="tagrow">${ownerChip(k)}${editorNote(k)}${inputNote(k)}</div></div>
       <div class="act">
         <button class="ico-btn" data-editkeg="${k.id}" title="Edit kegiatan" aria-label="Edit kegiatan">${ic('edit')}</button>
         <button class="del" data-delkeg="${k.id}" title="Hapus" aria-label="Hapus kegiatan">${ic('x')}</button>
@@ -596,7 +602,7 @@ function renderKas(){
       <td style="color:var(--mut)">${esc(r.x.catatan)||'—'}</td>
       <td class="num"><span class="amount ${r.x.jenis==='masuk'?'in':'out'}">${r.x.jenis==='masuk'?'+':'−'} ${fmtMoney(r.x.nominal)}</span></td>
       <td class="num" style="font-weight:600">${fmtMoney(r.run)}</td>
-      <td style="white-space:nowrap">${ownerChip(r.x)}${editorNote(r.x)}</td>
+      <td style="white-space:nowrap">${ownerChip(r.x)}${editorNote(r.x)}<div class="meta" style="margin-top:3px">${inputNote(r.x)}</div></td>
       <td style="white-space:nowrap"><div class="act">
         <button class="ico-btn" data-edittx="${r.x.id}" title="Edit transaksi" aria-label="Edit transaksi">${ic('edit')}</button>
         <button class="del" data-deltx="${r.x.id}" title="Hapus" aria-label="Hapus transaksi">${ic('x')}</button>
