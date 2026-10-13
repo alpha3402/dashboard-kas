@@ -351,9 +351,10 @@ dialog.dlg .row .btn{margin:0}
       Susun kegiatan &amp; uang kas jadi teks siap tempel ke chat WhatsApp.
     </p>
     <form class="f" id="formLap" novalidate>
+      <div><label style="margin-bottom:8px">Periode export <span style="font-weight:400;text-transform:none">(berlaku untuk Laporan Kegiatan dan Laporan Kas)</span></label></div>
       <div class="row2">
-        <div><label for="lapDari">Dari tanggal</label><input type="date" id="lapDari"></div>
-        <div><label for="lapSampai">Sampai tanggal</label><input type="date" id="lapSampai"></div>
+        <div><label for="lapDari">Dari tanggal</label><input type="date" id="lapDari" required></div>
+        <div><label for="lapSampai">Sampai tanggal</label><input type="date" id="lapSampai" required></div>
       </div>
       <div class="fbar" style="margin-bottom:0">
         <span style="color:var(--mut);font-size:12px;font-weight:600">Cepat:</span>
@@ -1190,15 +1191,16 @@ function buildLaporanKegiatan(dari,sampai,judul){
       const d=(k.desc||'').trim();if(d)d.split(String.fromCharCode(10)).forEach(x=>L.push(`  ${x.trim()}`));
     });
   });
-  return L.join('\\n');
+  return L.join('\n');
 }
 function buildLaporanKas(dari,sampai){
   const inTx=t=>{const y=t.tanggal||'';return (!dari||y>=dari)&&(!sampai||y<=sampai)};
   const all=txs.slice().sort((a,b)=>(a.tanggal||'').localeCompare(b.tanggal||'')||((a.ts||0)-(b.ts||0)));
   const list=all.filter(inTx), dates=[...new Set(list.map(t=>t.tanggal||''))].filter(Boolean).sort();
   let saldo=0;if(dari)all.forEach(t=>{if((t.tanggal||'')<dari)saldo+=(t.jenis==='masuk'?1:-1)*(+t.nominal||0)});
-  const L=['*Laporan Uang Kas*',''];
-  if(!dates.length){L.push('_Tidak ada transaksi kas pada periode ini._');return L.join('\\n')}
+  const label=periodeLabel(dari,sampai);
+  const L=['*Laporan Uang Kas*',label?`*Periode: ${label}*`:'',''];
+  if(!dates.length){L.push('_Tidak ada transaksi kas pada periode ini._');return L.join('\n')}
   dates.forEach((date,di)=>{
     const day=list.filter(t=>t.tanggal===date), masuk=day.filter(t=>t.jenis==='masuk').reduce((s,t)=>s+(+t.nominal||0),0), keluar=day.filter(t=>t.jenis==='keluar'), total=keluar.reduce((s,t)=>s+(+t.nominal||0),0);
     if(di)L.push('','—————————————','');
@@ -1208,11 +1210,11 @@ function buildLaporanKas(dari,sampai){
     if(keluar.length>1)L.push('',`Total: *${fmtRpSpace(total)}*`);
     saldo+=masuk-total;L.push(`Balance: *${fmtRpSpace(saldo)}*`);
   });
-  return L.join('\\n');
+  return L.join('\n');
 }
 function fmtRpSpace(n){return 'Rp. '+new Intl.NumberFormat('id-ID').format(Math.round(+n||0))}
 function buildLaporan(dari,sampai,judul){
-  return buildLaporanKegiatan(dari,sampai,judul)+'\\n\\n—————————————\\n\\n'+buildLaporanKas(dari,sampai);
+  return buildLaporanKegiatan(dari,sampai,judul)+'\n\n—————————————\n\n'+buildLaporanKas(dari,sampai);
 }
 
 function renderLaporan(){
