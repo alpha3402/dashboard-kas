@@ -259,6 +259,7 @@ dialog.dlg .row .btn{margin:0}
 <nav class="tabs">
   <button data-tab="dashboard" class="on"><svg class="ic" aria-hidden="true"><use href="#i-grid"/></svg> Dashboard</button>
   <button data-tab="kegiatan"><svg class="ic" aria-hidden="true"><use href="#i-cal"/></svg> Kegiatan</button>
+  <button data-tab="rengiat"><svg class="ic" aria-hidden="true"><use href="#i-next"/></svg> Rengiat</button>
   <button data-tab="kas"><svg class="ic" aria-hidden="true"><use href="#i-cash"/></svg> Kas</button>
   <button data-tab="data"><svg class="ic" aria-hidden="true"><use href="#i-db"/></svg> Data</button>
 </nav>
@@ -307,6 +308,21 @@ dialog.dlg .row .btn{margin:0}
   <div id="grpAkan"></div>
   <div class="grp-title"><span><svg class="ic sm" aria-hidden="true" style="color:var(--mut)"><use href="#i-dot"/></svg> Sudah Lewat</span><div class="ln"></div></div>
   <div id="grpLewat"></div>
+</section>
+
+<!-- ============ RENGIAT ============ -->
+<section class="tab" id="tab-rengiat">
+  <div class="card">
+    <h2 class="sec" style="margin-top:0"><svg class="ic" aria-hidden="true"><use href="#i-next"/></svg> Rengiat Besok</h2>
+    <p style="color:var(--mut);font-size:14px;margin-bottom:12px">Rencana kegiatan yang dijadwalkan untuk besok.</p>
+    <div id="rengiatDate" class="badge b-blue" style="margin-bottom:14px"></div>
+    <div id="rengiatList"></div>
+    <div class="fbar" style="margin-top:14px">
+      <button type="button" class="btn" id="btnRengiatCopy"><svg class="ic" aria-hidden="true"><use href="#i-send"/></svg> Salin Rengiat</button>
+    </div>
+    <label for="rengiatOut" style="margin-top:14px">Pratinjau WhatsApp</label>
+    <textarea id="rengiatOut" rows="14" readonly spellcheck="false" style="min-height:260px"></textarea>
+  </div>
 </section>
 
 <!-- ============ KAS ============ -->
@@ -577,6 +593,25 @@ function kegCards(list){
 }
 
 /* ---------- render: kegiatan ---------- */
+function tomorrowStr(){const d=new Date();d.setDate(d.getDate()+1);return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`}
+function buildRengiat(){
+  const besok=tomorrowStr(), list=kegs.filter(k=>k.tanggal===besok).slice().sort((a,b)=>(a.waktu||'').localeCompare(b.waktu||'')||(a.ts||0)-(b.ts||0));
+  const L=['*RENGIAT*',`*${tanggalIndo(besok)}*`,''];
+  if(!list.length)L.push('_Tidak ada kegiatan besok._');
+  list.forEach((k,i)=>{
+    const jam=k.waktu?` · ${k.waktu}`:'';
+    const lokasi=k.lokasi?`\nLokasi: ${k.lokasi}`:'';
+    L.push(`${i+1}. *${k.nama||'(tanpa nama)'}*${jam}${lokasi}`);
+    if((k.desc||'').trim())L.push(`Keterangan: ${k.desc.trim()}`);
+    if(i<list.length-1)L.push('');
+  });
+  return {list,text:L.join('\n')};
+}
+function renderRengiat(){
+  const out=$('#rengiatOut'),listEl=$('#rengiatList'),dateEl=$('#rengiatDate');if(!out||!listEl||!dateEl)return;
+  const r=buildRengiat();dateEl.textContent=tanggalIndo(tomorrowStr());out.value=r.text;
+  listEl.innerHTML=r.list.length?r.list.map(k=>`<div class="item"><div class="nama">${esc(k.nama||'(tanpa nama)')}</div><div class="meta">${k.waktu?esc(k.waktu)+' · ':''}${k.lokasi?esc(k.lokasi):'Lokasi belum diisi'}</div>${k.desc?`<div class="desc">${esc(k.desc)}</div>`:''}</div>`).join(''):'<div class="empty">Tidak ada kegiatan besok.</div>';
+}
 function renderKegiatan(){
   const t=todayStr();
   const sortAsc=(a,b)=>a.tanggal.localeCompare(b.tanggal);
@@ -626,7 +661,7 @@ function renderAll(){
     const el=$(s); if(el)snap[s]={v:el.value,sel:el.selectedIndex};
   });
   const kesc=$('#formKeg .esc')?.checked, cesc=$('#formKas .esc')?.checked;
-  renderDashboard();renderKegiatan();renderKas();renderStore();
+  renderDashboard();renderKegiatan();renderRengiat();renderKas();renderStore();
   Object.entries(snap).forEach(([s,o])=>{const el=$(s); if(el){el.value=o.v; if(o.sel!=null&&el.tagName==='SELECT')el.selectedIndex=o.sel}});
   if(kesc!=null&&$('#formKeg .esc'))$('#formKeg .esc').checked=kesc;
   if(cesc!=null&&$('#formKas .esc'))$('#formKas .esc').checked=cesc;
@@ -1240,6 +1275,7 @@ $('#lapSemua').addEventListener('click',()=>setLapRange('',''));
   $('#'+id).addEventListener('change',renderLaporan);
   $('#'+id).addEventListener('input',renderLaporan);
 });
+$('#btnRengiatCopy').addEventListener('click',()=>copyLap('#rengiatOut'));
 $('#btnLapKegCopy').addEventListener('click',()=>copyLap('#lapKegOut'));
 $('#btnLapKasCopy').addEventListener('click',()=>copyLap('#lapKasOut'));
 /* Refresh laporan tiap data berubah + saat tab Data dibuka. */
