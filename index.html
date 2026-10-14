@@ -386,7 +386,7 @@ dialog.dlg .row .btn{margin:0}
     </div>
     <label for="lapKegOut" style="margin-top:16px">Pratinjau Laporan Kegiatan</label>
     <textarea id="lapKegOut" rows="12" readonly spellcheck="false" style="min-height:240px"></textarea>
-    <label for="lapKasOut" style="margin-top:16px">Pratinjau Laporan Uang Kas</label>
+    <label for="lapKasOut" style="margin-top:16px">Pratinjau Laporan Keuangan &amp; Talangan Dana</label>
     <textarea id="lapKasOut" rows="22" readonly spellcheck="false" style="min-height:340px"></textarea>
   </div>
   <div class="card" style="margin-top:12px">
@@ -1233,19 +1233,25 @@ function buildLaporanKas(dari,sampai){
   const inTx=t=>{const y=t.tanggal||'';return (!dari||y>=dari)&&(!sampai||y<=sampai)};
   const all=txs.slice().sort((a,b)=>(a.tanggal||'').localeCompare(b.tanggal||'')||((a.ts||0)-(b.ts||0)));
   const list=all.filter(inTx), dates=[...new Set(list.map(t=>t.tanggal||''))].filter(Boolean).sort();
-  let saldo=0;if(dari)all.forEach(t=>{if((t.tanggal||'')<dari)saldo+=(t.jenis==='masuk'?1:-1)*(+t.nominal||0)});
-  const label=periodeLabel(dari,sampai);
-  const L=['*Laporan Uang Kas*',label?`*Periode: ${label}*`:'',''];
+  const label=periodeLabel(dari,sampai), L=['*LAPORAN KEUANGAN & TALANGAN DANA*','*Catatan Uang Kapolres*',label?`*Periode: ${label}*`:'','────────────────────'];
   if(!dates.length){L.push('_Tidak ada transaksi kas pada periode ini._');return L.join('\n')}
+  let totalMasuk=0,totalKeluar=0;
   dates.forEach((date,di)=>{
-    const day=list.filter(t=>t.tanggal===date), masuk=day.filter(t=>t.jenis==='masuk').reduce((s,t)=>s+(+t.nominal||0),0), keluar=day.filter(t=>t.jenis==='keluar'), total=keluar.reduce((s,t)=>s+(+t.nominal||0),0);
-    if(di)L.push('','—————————————','');
-    L.push(`*${tanggalIndo(date)}*`,'',`Balance: *${fmtRpSpace(saldo)}*`,`Uang Masuk: ${masuk?`*${fmtRpSpace(masuk)}*`:'-'}`,'','Pengeluaran:');
-    if(!keluar.length)L.push('-');
-    keluar.forEach((t,i)=>L.push(`${i+1}. ${((t.catatan||'').trim()||t.kat||'Pengeluaran')}: *${fmtRpSpace(+t.nominal||0)}*`));
-    if(keluar.length>1)L.push('',`Total: *${fmtRpSpace(total)}*`);
-    saldo+=masuk-total;L.push(`Balance: *${fmtRpSpace(saldo)}*`);
+    const day=list.filter(t=>t.tanggal===date), masukRows=day.filter(t=>t.jenis==='masuk'), keluar=day.filter(t=>t.jenis==='keluar');
+    const masuk=masukRows.reduce((s,t)=>s+(+t.nominal||0),0), total=keluar.reduce((s,t)=>s+(+t.nominal||0),0);
+    totalMasuk+=masuk;totalKeluar+=total;
+    if(di)L.push('────────────────────');
+    L.push(`*${di+1}. ${tanggalIndo(date)}*`);
+    if(masuk)L.push(`• *Penerimaan Dana:* ${fmtRpSpace(masuk)}`);
+    if(keluar.length){
+      L.push('', '*Pengeluaran:*');
+      keluar.forEach((t,i)=>L.push(`${i+1}. ${((t.catatan||'').trim()||t.kat||'Pengeluaran')}: ${fmtRpSpace(+t.nominal||0)}`));
+      L.push(`*Total Pengeluaran: ${fmtRpSpace(total)}*`);
+    }
+    if(masuk&&total)L.push('',`_Sisa Dana Masuk (${fmtRpSpace(masuk)} - ${fmtRpSpace(total)}): ${fmtRpSpace(masuk-total)}_`);
   });
+  const akhir=totalMasuk-totalKeluar;
+  L.push('────────────────────','','*REKAPITULASI KESELURUHAN*',`• Total Penerimaan Dana: ${fmtRpSpace(totalMasuk)}`,`• Total Pengeluaran: ${fmtRpSpace(totalKeluar)}`,'','*SALDO AKHIR / TALANGAN DANA:*',`*${fmtRpSpace(akhir)}*`);
   return L.join('\n');
 }
 function fmtRpSpace(n){return 'Rp. '+new Intl.NumberFormat('id-ID').format(Math.round(+n||0))}
